@@ -35,12 +35,8 @@ def run_seo_crew(url:str)->None:
             status.update(label="✅ SEO tasks completed!", state="complete")
             st.success("SEO Process completed successfully!")
             st.subheader("Results:")
-            st.write("Title:")
-            st.write(result["title"])
+            st.write(result)
         
-            st.write("Description:")
-            st.write(result["description"])
-
         except Exception as e:
             status.update(label="❌ Error occurred", state="error")
             st.error(f"An error occurred: {str(e)}")
