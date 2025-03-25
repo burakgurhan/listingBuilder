@@ -15,7 +15,7 @@ class ScraperAgent:
         self.website_search = WebsiteSearchTool()
         self.scrape_web = ScrapeWebsiteTool()
 
-    def get_llm(self, model_name: str="groq/llama-3.3-70b-versatile", 
+    def get_llm(self, model_name: str="groq/qwen-2.5-32b", 
                 temperature: float=0.1):
         """
         Args: 

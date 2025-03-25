@@ -27,13 +27,13 @@ class EditorAgent:
         if not self.api_key:
             raise ValueError("GROQ_API_KEY not found or empty in .env file")
 
-    def get_llm(self, model_name: str = "groq/llama-3.3-70b-versatile",
+    def get_llm(self, model_name: str = "groq/qwen-2.5-32b",
                 temperature: float = 0.4) -> LLM:
         """
         Create and configure a Language Learning Model instance.
         
         Args:
-            model_name: The name of the model to use (default: groq/llama-3.3-70b-versatile)
+            model_name: The name of the model to use (default: qwen-2.5-32b)
             temperature: Controls randomness in responses (default: 0.4)
                          Lower values are more deterministic, higher values more creative
         
@@ -49,7 +49,7 @@ class EditorAgent:
         except Exception as e:
             raise RuntimeError(f"Error initializing LLM: {e}")
 
-    def create_researcher_agent(self, custom_goal: Optional[str] = None) -> Agent:
+    def create_editor_agent(self, custom_goal: Optional[str] = None) -> Agent:
         """
         Create and configure a title and description builder agent with specific role and capabilities.
         

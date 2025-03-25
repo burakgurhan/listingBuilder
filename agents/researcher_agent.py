@@ -33,13 +33,13 @@ class ResearcherAgent:
         self.website_search = WebsiteSearchTool()
         self.scrape_web = ScrapeWebsiteTool()
 
-    def get_llm(self, model_name: str = "groq/llama-3.3-70b-versatile",
+    def get_llm(self, model_name: str = "groq/qwen-2.5-32b",
                 temperature: float = 0.3) -> LLM:
         """
         Create and configure a Language Learning Model instance.
         
         Args:
-            model_name: The name of the model to use (default: groq/llama-3.3-70b-versatile)
+            model_name: The name of the model to use (default: qwen-2.5-32b)
             temperature: Controls randomness in responses (default: 0.3)
                          Lower values are more deterministic, higher values more creative
         
