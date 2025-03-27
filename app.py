@@ -1,3 +1,4 @@
+import logging
 import streamlit as st
 from main import SEOCrew
 from urllib.parse import urlparse
@@ -17,29 +18,47 @@ def is_valid_url(url:str)->bool:
         return all([result.scheme, result.netloc])
     except ValueError:
         return False
-    
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+
 def run_seo_crew(url:str)->None:
+    logging.info(f"URL received: {url}")
     """Initialize and run the SEO Crew."""
     with st.status("🚀 Running SEO Crew...", expanded=True) as status:
+        logging.info("Initializing crew agents...")
         try:
             st.write("🔍 Initializing crew agents...")
-            crew = SEOCrew(url).create_crew()
+            logging.info("Crew agents initialized.")
+            crew = SEOCrew(url).create_crew()  # Initialize the crew with the provided URL
+            logging.info("Crew created successfully.")
 
             if crew is None:
-                st.error("Failed to initialize SEO Crew...")
+                st.error("Failed to initialize SEO Crew. Please check the API keys and input data.")
                 return
             
             st.write("📋 Starting tasks execution...")
             result = crew.kickoff()
 
-            status.update(label="✅ SEO tasks completed!", state="complete")
+            status.update(label="✅ SEO tasks completed!", state="complete")  # Update status to completed
+            logging.info("SEO tasks completed successfully.")
             st.success("SEO Process completed successfully!")
             st.subheader("Results:")
-            st.write(result)
+            st.title("🔍 Extracted Product Information")
+
+            # Display the JSON data
+            st.subheader("📦 Product Details")
+            st.json(result)  # Pretty JSON output
+
+            # Alternatively, display it as Markdown text
+            st.subheader("📜 Product Overview")
+            st.write(f"**Title:** {result['title']}")
+            st.write(f"**Description:** {result['description']}")
+            logging.info("Results displayed.")
         
         except Exception as e:
             status.update(label="❌ Error occurred", state="error")
-            st.error(f"An error occurred: {str(e)}")
+            st.error(f"An error occurred during SEO Crew execution: {str(e)}")
             st.exception(e)
 
 def main():

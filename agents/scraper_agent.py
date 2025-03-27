@@ -1,41 +1,13 @@
-import os
-import warnings
-from dotenv import load_dotenv
-from crewai import Agent, LLM
-from crewai_tools import WebsiteSearchTool, ScrapeWebsiteTool
-
-warnings.filterwarnings("ignore")
-load_dotenv()
+from crewai import Agent
+from crewai.project import agent
 
 class ScraperAgent:
-    def __init__(self):
-        self.groq_api_key = os.environ["GROQ_API_KEY"]
-        if not self.groq_api_key:
-            raise ValueError("GROQ_API_KEY not found in .env file")
-        self.website_search = WebsiteSearchTool()
-        self.scrape_web = ScrapeWebsiteTool()
+    def __init__(self, web_scrape_tool, web_search_tool):
+        self.web_scrape_tool = web_scrape_tool
+        self.web_search_tool = web_search_tool
 
-    def get_llm(self, model_name: str="groq/qwen-2.5-32b", 
-                temperature: float=0.1):
-        """
-        Args: 
-            model_name (str): the name of the model.
-            temperature (float): the temperature of the model.
-        Returns:
-            LLM: An initialized LLM instance
-        """
-        try:
-            return LLM(
-                model = model_name,
-                temperature = temperature,
-                api_key=self.groq_api_key
-            )
-        except Exception as e:
-            raise RuntimeError(f"Error initializing LLM: {e}")
     
-
     def create_scraper_agent(self):
-        # Create the scraper agent
         """
         Create and configure a web scraping agent with specific role and capabilities.
         
@@ -45,18 +17,18 @@ class ScraperAgent:
         Returns:
             A configured Agent instance ready to perform web scraping tasks
         """
+
         try:
             return Agent(
-                llm=self.get_llm(),
                 role="Web Scraper",
                 backstory="""
                 You are an expert web scraper with extensive experience in e-commerce data extraction.
                 You're known for your exceptional attention to detail and ability to identify 
                 valuable insights from product listings that others might miss.
                 You understand product specifications, pricing patterns, and competitive positioning.
-            """,
+                """,
                 goal="Your goal is to extract data from product detail pages and then report it to the next agent.",
-                tools=[self.scrape_web, self.website_search],
+                tools=[self.web_scrape_tool, self.web_search_tool],
                 verbose=True
             )
         except Exception as e:

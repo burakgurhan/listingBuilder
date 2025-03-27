@@ -1,15 +1,6 @@
-import os
-import warnings
 from typing import Optional
-from dotenv import load_dotenv
-from crewai import Agent, LLM
-
-# Suppress non-critical warnings
-warnings.filterwarnings("ignore")
-
-# Load environment variables from .env file
-load_dotenv()
-
+from crewai import Agent
+from crewai.project import agent
 
 class EditorAgent:
     """
@@ -20,35 +11,9 @@ class EditorAgent:
 
     def __init__(self):
         """Initialize the ResearcherAgent with necessary API keys and tools."""
-        # Get API key from environment variables
-        self.api_key = os.environ.get("GROQ_API_KEY")
+        #self.llm = llm
         
-        # Validate API key
-        if not self.api_key:
-            raise ValueError("GROQ_API_KEY not found or empty in .env file")
-
-    def get_llm(self, model_name: str = "groq/qwen-2.5-32b",
-                temperature: float = 0.4) -> LLM:
-        """
-        Create and configure a Language Learning Model instance.
-        
-        Args:
-            model_name: The name of the model to use (default: qwen-2.5-32b)
-            temperature: Controls randomness in responses (default: 0.4)
-                         Lower values are more deterministic, higher values more creative
-        
-        Returns:
-            An initialized LLM instance ready for use by agents
-        """
-        try:
-            return LLM(
-                model=model_name,
-                temperature=temperature,
-                api_key=self.api_key
-            )
-        except Exception as e:
-            raise RuntimeError(f"Error initializing LLM: {e}")
-
+    
     def create_editor_agent(self, custom_goal: Optional[str] = None) -> Agent:
         """
         Create and configure a title and description builder agent with specific role and capabilities.
@@ -63,7 +28,7 @@ class EditorAgent:
         
         try:
             return Agent(
-                llm=self.get_llm(),
+                #llm=self.llm,
                 role="SEO Expert",
                 backstory="""
                 You are an expert Title builder with extensive experience in e-commerce.

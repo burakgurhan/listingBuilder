@@ -1,12 +1,13 @@
-import os
 from crewai import Task
 from crewai.project import task
 from agents.editor_agent import EditorAgent
+
 class WritingTask:
     def __init__(self):
         pass
-
-    def create_writing_task(self):
+    
+    
+    def create_writing_task(self):        
         return Task(
             name="Writing Task",
     description="""

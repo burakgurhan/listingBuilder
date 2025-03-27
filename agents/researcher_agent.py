@@ -1,16 +1,6 @@
-import os
-import warnings
 from typing import Optional
-from dotenv import load_dotenv
-from crewai import Agent, LLM
-from crewai_tools import WebsiteSearchTool, ScrapeWebsiteTool
-
-# Suppress non-critical warnings
-warnings.filterwarnings("ignore")
-
-# Load environment variables from .env file
-load_dotenv()
-
+from crewai import Agent
+from crewai.project import agent
 
 class ResearcherAgent:
     """
@@ -20,41 +10,12 @@ class ResearcherAgent:
     for product positioning in the market.
     """
 
-    def __init__(self):
+    def __init__(self, web_search_tool):
         """Initialize the ResearcherAgent with necessary API keys and tools."""
-        # Get API key from environment variables
-        self.api_key = os.environ.get("GROQ_API_KEY")
-        
-        # Validate API key
-        if not self.api_key:
-            raise ValueError("GROQ_API_KEY not found or empty in .env file")
-            
-        # Initialize tools
-        self.website_search = WebsiteSearchTool()
-        self.scrape_web = ScrapeWebsiteTool()
+        self.web_search_tool = web_search_tool
 
-    def get_llm(self, model_name: str = "groq/qwen-2.5-32b",
-                temperature: float = 0.3) -> LLM:
-        """
-        Create and configure a Language Learning Model instance.
-        
-        Args:
-            model_name: The name of the model to use (default: qwen-2.5-32b)
-            temperature: Controls randomness in responses (default: 0.3)
-                         Lower values are more deterministic, higher values more creative
-        
-        Returns:
-            An initialized LLM instance ready for use by agents
-        """
-        try:
-            return LLM(
-                model=model_name,
-                temperature=temperature,
-                api_key=self.api_key
-            )
-        except Exception as e:
-            raise RuntimeError(f"Error initializing LLM: {e}")
 
+    
     def create_researcher_agent(self, custom_goal: Optional[str] = None) -> Agent:
         """
         Create and configure a market researcher agent with specific role and capabilities.
@@ -70,7 +31,6 @@ class ResearcherAgent:
         
         try:
             return Agent(
-                llm=self.get_llm(),
                 role="Market Researcher",
                 backstory="""
                 You are an expert market researcher with extensive experience in e-commerce competition analysis.
@@ -86,7 +46,7 @@ class ResearcherAgent:
                 5. Researching trending and high-value keywords in the market
                 """,
                 goal=custom_goal or default_goal,
-                tools=[self.scrape_web, self.website_search],
+                tools=[self.web_search_tool],
                 verbose=True
             )
         except Exception as e:

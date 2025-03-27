@@ -1,10 +1,12 @@
-import os
 from crewai import Task
 from agents.researcher_agent import ResearcherAgent
-class ResearchTask:
-    def __init__(self):
-        pass
+from crewai.project import task
 
+class ResearchTask:
+    def __init__(self, web_search_tool):
+        self.web_search_tool = web_search_tool
+
+    
     def create_research_task(self):
         return Task(
             description="""
@@ -39,5 +41,6 @@ class ResearchTask:
         "audience_keywords": ["...", "..."]
     }
     """,
-    agent=ResearcherAgent().create_researcher_agent()
+    agent=ResearcherAgent(self.web_search_tool).create_researcher_agent(),
+    tools=[self.web_search_tool]
         )
