@@ -1,7 +1,7 @@
 import logging
 import validators
 import streamlit as st
-from main import SEOCrew
+from main import ListingBuilderCrew
 from urllib.parse import urlparse
 import json 
 
@@ -27,13 +27,20 @@ logging.basicConfig(level=logging.INFO)
 
 def run_seo_crew(url: str) -> None:
     """Initialize and run the SEO Crew."""
+    def load_api_keys():
+        groq_api_key = st.secrets.get("GROQ_API_KEY")
+        openai_api_key = st.secrets.get("OPENAI_API_KEY")
+        return groq_api_key, openai_api_key
+    # Load API keys from Streamlit secrets
+    groq_api_key, openai_api_key = load_api_keys()
+
     logging.info(f"URL received: {url}")
     with st.spinner("🚀 The crew building title and description..."):
         try:
             st.write("🔍 Initializing crew agents...")
-            crew = SEOCrew(url).create_crew()
+            crew = ListingBuilderCrew(url, groq_api_key, openai_api_key).create_crew()
             if crew is None:
-                st.error("Failed to initialize SEO Crew. Please check the API keys and input data.")
+                st.error("Failed to initialize Listing Builder Crew. Please check the API keys and input data.")
                 return
 
             st.write("📋 Starting tasks execution...")
@@ -55,7 +62,7 @@ def run_seo_crew(url: str) -> None:
                 logging.error(f"JSONDecodeError: {str(e)}")
                 return
             # Display the title and description
-            st.subheader("📦 Product Details")
+            st.subheader("📦 New Product Details")
             st.markdown(f"**Title:** {title}")
             st.markdown(f"**Description:** {description}")
 

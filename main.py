@@ -14,9 +14,9 @@ from tasks.writing_task import WritingTask
 from crewai_tools import WebsiteSearchTool, ScrapeWebsiteTool
 load_dotenv()
 
-class SEOCrew:
+class ListingBuilderCrew:
     """A crew responsible for SEO-related tasks including scraping, research, and content writing."""
-    def __init__(self, url, max_retries=3):
+    def __init__(self, url, groq_api_key, openai_api_key, max_retries=3):
         """
         Args:
             url (str): The target URL for SEO operations. Must be a valid HTTP/HTTPS URL.
@@ -27,11 +27,11 @@ class SEOCrew:
         self.web_search_tool = WebsiteSearchTool()
         self.web_scrape_tool = ScrapeWebsiteTool()
         
-        self.groq_api_key = os.environ["GROQ_API_KEY"]
+        self.groq_api_key = groq_api_key
         if not self.groq_api_key:
             raise ValueError("GROQ_API_KEY not found in .env file")
         
-        self.openai_api_key = os.environ["OPENAI_API_KEY"]
+        self.openai_api_key = openai_api_key
         if not self.openai_api_key:
             raise ValueError("OPENAI_API_KEY not found in .env file")
     
