@@ -2,7 +2,7 @@ import os
 import time
 import litellm
 from dotenv import load_dotenv
-from crewai import Crew, Process, LLM
+from crewai import Crew, Process
 from crewai.project import agent, task, crew
 from langchain_groq import ChatGroq
 from agents.scraper_agent import ScraperAgent

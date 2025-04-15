@@ -27,7 +27,7 @@ class ScraperAgent:
                 valuable insights from product listings that others might miss.
                 You understand product specifications, pricing patterns, and competitive positioning.
                 """,
-                goal="Your goal is to extract data from product detail pages and then report it to the next agent.",
+                goal="Your goal is to extract title and description from product detail pages and then report it to the next agent.",
                 tools=[self.web_scrape_tool, self.web_search_tool],
                 verbose=True
             )

@@ -20,7 +20,9 @@ class WritingTask:
     - Must be clear, engaging, and **easy for customers to understand**.  
 
     ### Description Requirements:
-    - Must be exactly **300 characters** (no more, no less).  
+    - Must be exactly **4 paragraphs** each paragraph has maximum 3 sentence. (no more, no less).  
+    - Use best keywords from the report. Use keywords naturally.
+    - Must not exceed 400 words. (no more, no less).  
     - Should be **SEO-optimized** and naturally incorporate important keywords.  
     - Must provide a compelling yet concise overview of the product.  
     - Ensure clarity and readability for potential buyers.  
@@ -32,7 +34,7 @@ class WritingTask:
     A dictionary containing the SEO-optimized title and description:
     {
         "title": "Exactly 80-character product title...",
-        "description": "Exactly 300-character product description..."
+        "description": "Exactly 4 paragraphs product description..."
     }
     """,
     agent=EditorAgent().create_editor_agent()
