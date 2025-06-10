@@ -4,6 +4,9 @@ import streamlit as st
 from main import ListingBuilderCrew
 from urllib.parse import urlparse
 import json 
+import os 
+from dotenv import load_dotenv
+load_dotenv()
 
 # App configuration
 st.set_page_config(
@@ -28,8 +31,8 @@ logging.basicConfig(level=logging.INFO)
 def run_seo_crew(url: str) -> None:
     """Initialize and run the SEO Crew."""
     def load_api_keys():
-        groq_api_key = st.secrets.get("GROQ_API_KEY")
-        openai_api_key = st.secrets.get("OPENAI_API_KEY")
+        groq_api_key = os.environ.get("GROQ_API_KEY")
+        openai_api_key = os.environ.get("OPENAI_API_KEY")
         return groq_api_key, openai_api_key
     # Load API keys from Streamlit secrets
     groq_api_key, openai_api_key = load_api_keys()
@@ -74,6 +77,7 @@ def run_seo_crew(url: str) -> None:
             logging.exception(e)
 
 def main():
+    """Main function to run the Streamlit app."""
     st.title("📝 Listing Builder")
     st.markdown("""
                 This application uses AI agents to analyze your product URL and generate SEO-optimized title and description.

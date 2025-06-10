@@ -32,6 +32,7 @@ class ScrapingTask:
     Extract the following details:  
     - **Title**: The name of the product.  
     - **Description**: Description of the product.  
+    - **Category**: The main category of the product.  
     - **Color**: The available colors of the product.  
     - **Size**: The dimensions or size variations of the product.  
     - **Count**: The number of items included in a package.  
@@ -50,6 +51,7 @@ class ScrapingTask:
     {
         "title": "...",
         "description": "...",
+        "category": "...",
         "color": "...",
         "size": "...",
         "count": "..."
