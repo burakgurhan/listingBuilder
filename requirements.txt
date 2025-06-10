@@ -9,3 +9,5 @@ langchain-groq
 python-dotenv
 validators
 litellm
+requests
+beautifulsoup4
