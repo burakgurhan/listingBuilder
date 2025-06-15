@@ -24,7 +24,9 @@ class WritingTask:
     - Use best keywords from the report. Use keywords naturally.
     - Must not exceed 400 words. (no more, no less).  
     - Should be **SEO-optimized** and naturally incorporate important keywords.  
-    - Must provide a compelling yet concise overview of the product.  
+    - Must provide a compelling yet concise overview of the product. 
+    - Should highlight key features, benefits, and unique selling points.
+    - Focus on the product's value proposition and how it meets customer needs in one paragraph. 
     - Ensure clarity and readability for potential buyers.  
     - **Only use information from the research report** (do not add external context).  
 

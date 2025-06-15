@@ -31,7 +31,7 @@ class ScrapingTask:
     Scrape the product information from the given web page URL.  
     Extract the following details:  
     - **Title**: The name of the product.  
-    - **Description**: Description of the product.  
+    - **Description**: Description or bullet-points of the product.  
     - **Category**: The main category of the product.  
     - **Color**: The available colors of the product.  
     - **Size**: The dimensions or size variations of the product.  
