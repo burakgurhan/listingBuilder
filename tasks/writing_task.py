@@ -29,6 +29,7 @@ class WritingTask:
     - Focus on the product's value proposition and how it meets customer needs in one paragraph. 
     - Ensure clarity and readability for potential buyers.  
     - **Only use information from the research report** (do not add external context).  
+    - Do not include Brand name in the title.
 
     The final output should be well-structured and formatted for easy processing.  
     """,

@@ -66,8 +66,8 @@ def run_seo_crew(url: str) -> None:
                 return
             # Display the title and description
             st.subheader("📦 New Product Details")
-            st.markdown(f"**Title:** {title}")
-            st.markdown(f"**Description:** {description}")
+            st.markdown(f"**Title:** \n{title}")
+            st.markdown(f"**Description:** ]n{description}")
 
         except KeyError as e:
             st.error(f"Missing key in response: {str(e)}")
