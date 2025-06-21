@@ -17,6 +17,7 @@ class ListingCrew():
         return Agent(
             config=self.agents_config['scraper'], # type: ignore[index]
             verbose=True,
+            max_retry_limit=3,
             tools=[SerperDevTool()]
         )
     
@@ -25,6 +26,9 @@ class ListingCrew():
         return Agent(
             config=self.agents_config['researcher'], # type: ignore[index]
             verbose=True,
+            max_iter=10,
+            reasoning=True,
+            max_reasoning_attemts=2,
             tools=[SerperDevTool()]
         )
 
@@ -32,7 +36,10 @@ class ListingCrew():
     def writer(self) -> Agent:
         return Agent(
             config=self.agents_config['writer'], # type: ignore[index]
-            verbose=True
+            verbose=True,
+            reasoning=True,
+            max_reasoning_attemts=2,
+            max_iter=5
         )
 
     @task
