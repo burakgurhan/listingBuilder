@@ -29,6 +29,7 @@ class ListingCrew():
             max_iter=10,
             reasoning=True,
             max_reasoning_attemts=2,
+            respect_context_window=True,
             tools=[SerperDevTool()]
         )
 
