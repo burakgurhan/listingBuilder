@@ -4,6 +4,7 @@ from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import SerperDevTool
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from typing import List
+from tools.custom_tools import validate_product_info
 
 @CrewBase
 class ListingCrew():
@@ -46,7 +47,8 @@ class ListingCrew():
     @task
     def scraping_task(self) -> Task:
         return Task(
-            config=self.tasks_config['scraping_task'] # type: ignore[index]
+            config=self.tasks_config['scraping_task'], # type: ignore[index]
+            guardrail=validate_product_info, # type: ignore[arg-type]
         )
 
     @task
