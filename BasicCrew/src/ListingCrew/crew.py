@@ -61,6 +61,7 @@ class ListingCrew():
     def writing_task(self) -> Task:
         return Task(
             config=self.tasks_config['writing_task'], # type: ignore[index]
+            max_retries=2,
             #output_file='output/report.md'
         )
 
