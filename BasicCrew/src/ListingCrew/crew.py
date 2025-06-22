@@ -4,7 +4,7 @@ from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import SerperDevTool
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from typing import List
-from tools.custom_tools import validate_product_info
+from tools.custom_tools import validate_product_info, validate_writing_output
 
 @CrewBase
 class ListingCrew():
@@ -62,6 +62,7 @@ class ListingCrew():
         return Task(
             config=self.tasks_config['writing_task'], # type: ignore[index]
             max_retries=2,
+            guardrail=validate_writing_output
             #output_file='output/report.md'
         )
 
