@@ -16,7 +16,7 @@ scraping_task:
     - Provide the collected information to the next agent for further processing.  
 
     Do not invent or create new data. Only extract the information from the given web page.
-    Here is the url: **{self.url}**
+    Here is the url: **{url}**
     
   expected_output: >
     A dictionary containing the product information:

@@ -11,7 +11,7 @@ def run():
     Run the research crew.
     """
     inputs = {
-        'topic': 'Artificial Intelligence in Healthcare'
+        'url': 'https://www.amazon.ca/Patella-Support-Basketball-Tendonitis-Volleyball/dp/B07DLFP8Q5/'
     }
 
     # Create and run the crew
