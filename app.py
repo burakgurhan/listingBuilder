@@ -66,14 +66,8 @@ def run_seo_crew(url: str) -> None:
                 return
             # Display the title and description
             st.subheader("📦 New Product Details")
-
-            # Title with copy button
-            st.markdown("**Title:**")
-            st.text_input("Copy Title", value=title, key="title_copy", help="Click the copy icon to copy the title", disabled=False, label_visibility="collapsed")
-
-            # Description with copy button
-            st.markdown("**Description:**")
-            st.text_area("Copy Description", value=description, key="desc_copy", help="Click the copy icon to copy the description", height=200, disabled=False, label_visibility="collapsed")
+            st.markdown(f"**Title:** \n\n{title}")
+            st.markdown(f"**Description:** \n\n{description}")
 
         except KeyError as e:
             st.error(f"Missing key in response: {str(e)}")
