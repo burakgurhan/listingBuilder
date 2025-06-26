@@ -1,8 +1,7 @@
 from typing import Tuple, Dict, Any
-from crewai import TaskOutput
+#from crewai import TaskOutput
 
-
-def validate_product_info(result: TaskOutput) -> Tuple[bool, Dict[str, Any]]:
+def validate_product_info(result: dict) -> Tuple[bool, Dict[str, Any]]:
     """
     Validate the product information extracted by the scraper.
     
@@ -12,7 +11,7 @@ def validate_product_info(result: TaskOutput) -> Tuple[bool, Dict[str, Any]]:
     Returns:
         Tuple[bool, Dict[str, Any]]: A tuple containing a boolean indicating success and a dictionary with validation details.
     """
-    if not result or not isinstance(result, TaskOutput):
+    if not result or not isinstance(result):
         return False, {"error": "Invalid result format"}
 
     product_info = result.data.get('product_info', {})
@@ -26,7 +25,7 @@ def validate_product_info(result: TaskOutput) -> Tuple[bool, Dict[str, Any]]:
     
     return True, {"message": "Product information is valid", "data": product_info}
 
-def validate_writing_output(result: TaskOutput) -> Tuple[bool, Dict[str, Any]]:
+def validate_writing_output(result: dict) -> Tuple[bool, Any]:
     """
     Validate the writing output from the writer task.
     
@@ -36,7 +35,7 @@ def validate_writing_output(result: TaskOutput) -> Tuple[bool, Dict[str, Any]]:
     Returns:
         Tuple[bool, Dict[str, Any]]: A tuple containing a boolean indicating success and a dictionary with validation details.
     """
-    if not result or not isinstance(result, TaskOutput):
+    if not result or not isinstance(result):
         return False, {"error": "Invalid result format"}
 
     writing_output = result.data.get('writing_output', {})

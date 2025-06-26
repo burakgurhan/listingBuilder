@@ -1,14 +1,13 @@
+import os
+import json 
 import logging
 import validators
 import streamlit as st
-from main import ListingBuilderCrew
 from urllib.parse import urlparse
-import json 
-import os 
 from dotenv import load_dotenv
+from crew import ListingCrew
 load_dotenv()
-# Import ListingCrew from the main module
-from BasicCrew.src.ListingCrew.crew import ListingCrew
+
 
 # App configuration
 st.set_page_config(
@@ -43,13 +42,13 @@ def run_seo_crew(url: str) -> None:
     with st.spinner("🚀 The crew building title and description..."):
         try:
             st.write("🔍 Initializing crew agents...")
-            crew = ListingBuilderCrew(url, groq_api_key, openai_api_key).create_crew()
+            crew = ListingCrew().crew()
             if crew is None:
                 st.error("Failed to initialize Listing Builder Crew. Please check the API keys and input data.")
                 return
 
             st.write("📋 Starting tasks execution...")
-            result = crew.kickoff()
+            result = crew.kickoff(inputs={"url": url})
             logging.info("Title and description completed successfully.")
             st.success("Title and description completed successfully!")
 
