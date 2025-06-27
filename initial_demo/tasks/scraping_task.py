@@ -1,5 +1,5 @@
 from crewai import Task
-from agents.scraper_agent import ScraperAgent
+from initial_demo.agents.scraper_agent import ScraperAgent # Updated import path
 from crewai.project import task
 from urllib.parse import urlparse, urlunparse
 

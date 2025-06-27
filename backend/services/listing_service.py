@@ -1,7 +1,7 @@
-from main import ListingBuilderCrew
-from models.product import Product
-from utils.helpers import validate_url, sanitize_url
-from config.settings import get_settings
+from initial_demo.main import ListingBuilderCrew # Assuming ListingBuilderCrew is in initial_demo/main.py
+from backend.models.product import Product # Updated import path
+from backend.utils.helpers import validate_url, sanitize_url # Updated import path
+from backend.config.settings import get_settings # Updated import path
 from typing import Dict, Optional
 import logging
 
