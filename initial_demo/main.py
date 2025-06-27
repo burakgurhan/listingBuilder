@@ -52,6 +52,19 @@ class ListingBuilderCrew:
             )
         except Exception as e:
             raise RuntimeError(f"Error initializing LLM: {e}")
+        
+    def _initialize_llm(self):
+        """
+        Initializes the LLM with the provided API key and model name.
+        
+        Returns:
+            ChatGroq: An initialized Langchain LLM instance
+        """
+        try:
+            return self._create_llm()
+        except Exception as e:
+            print(f"Error initializing LLM: {e}")
+            return None
     
     def _create_tasks(self):
         return [

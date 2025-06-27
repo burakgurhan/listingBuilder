@@ -14,7 +14,6 @@ class ResearcherAgent:
         """Initialize the ResearcherAgent with necessary API keys and tools."""
         self.web_search_tool = web_search_tool
 
-
     
     def create_researcher_agent(self, custom_goal: Optional[str] = None) -> Agent:
         """

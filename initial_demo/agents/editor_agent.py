@@ -11,7 +11,6 @@ class EditorAgent:
 
     def __init__(self):
         """Initialize the ResearcherAgent with necessary API keys and tools."""
-        #self.llm = llm
         
     
     def create_editor_agent(self, custom_goal: Optional[str] = None) -> Agent:
