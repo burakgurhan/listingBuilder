@@ -9,6 +9,8 @@ from app.utils.jwt_utils import create_access_token
 from app.utils.email_utils import send_reset_email
 from app.models.auth import LoginRequest, RegisterRequest, AuthResponse, ForgotPasswordRequest, ForgotPasswordResponse
 from app.models.product import GenerateTextRequest, GenerateTextResponse
+from fastapi.security import OAuth2PasswordBearer
+from typing import List
 
 router = APIRouter()
 
@@ -23,6 +25,18 @@ def get_db():
 @router.on_event("startup")
 def on_startup():
     init_db()
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login")
+
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    from app.utils.jwt_utils import decode_access_token
+    payload = decode_access_token(token)
+    if not payload or "sub" not in payload:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication credentials.")
+    user = get_user_by_email(db, payload["sub"])
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found.")
+    return user
 
 @router.post("/login", response_model=AuthResponse)
 def login(request: LoginRequest, db: Session = Depends(get_db)):
@@ -73,3 +87,63 @@ def generate_text(request: GenerateTextRequest):
         ],
         keywordsReport="bluetooth headphones, wireless, premium sound, long battery, music, over-ear"
     )
+
+# Mock history data for demonstration
+generation_history = [
+    {
+        "id": 1,
+        "url": "https://www.amazon.com/dp/B0BP7M5F3M",
+        "date": "2024-01-15",
+        "title": "Premium Wireless Bluetooth Headphones",
+        "status": "completed"
+    },
+    {
+        "id": 2,
+        "url": "https://www.amazon.com/dp/B08N5WRWNW",
+        "date": "2024-01-14",
+        "title": "Smart Home Security Camera",
+        "status": "completed"
+    },
+    {
+        "id": 3,
+        "url": "https://www.amazon.com/dp/B07XJ8C8F5",
+        "date": "2024-01-13",
+        "title": "Portable Phone Charger",
+        "status": "completed"
+    }
+]
+
+@router.get("/history")
+def get_history(current_user: User = Depends(get_current_user)):
+    # In production, filter by user
+    return generation_history
+
+@router.delete("/history/{item_id}")
+def delete_history(item_id: int, current_user: User = Depends(get_current_user)):
+    global generation_history
+    generation_history = [item for item in generation_history if item["id"] != item_id]
+    return {"message": "History item deleted."}
+
+@router.get("/profile")
+def get_profile(current_user: User = Depends(get_current_user)):
+    # Mock subscription data for demonstration
+    subscription = {
+        "plan": "Pro",
+        "status": "active",
+        "renewalDate": "2024-02-15",
+        "daysLeft": 25,
+        "generationsUsed": 157,
+        "generationsLimit": 1000
+    }
+    return {
+        "email": current_user.email,
+        "subscription": subscription
+    }
+
+@router.put("/profile")
+def update_profile(email: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    # Only email update for demo
+    current_user.email = email
+    db.commit()
+    db.refresh(current_user)
+    return {"message": "Profile updated.", "email": current_user.email}
