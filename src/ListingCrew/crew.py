@@ -21,7 +21,7 @@ class ListingCrew:
             role='Web Scraper',
             goal='Extract title, description, and bullet points from product detail pages.',
             backstory='You are an expert web scraper with extensive experience in e-commerce data extraction.',
-            tools=[web_scrape_tool],
+            tools=[web_scrape_tool, web_search_tool],
             verbose=True,
             allow_delegation=False
         )
