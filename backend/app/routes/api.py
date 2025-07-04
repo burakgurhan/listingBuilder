@@ -11,6 +11,7 @@ from app.models.auth import LoginRequest, RegisterRequest, AuthResponse, ForgotP
 from app.models.product import GenerateTextRequest, GenerateTextResponse
 from fastapi.security import OAuth2PasswordBearer
 from typing import List
+from src.ListingCrew.main import generate_listing
 
 router = APIRouter()
 
@@ -71,22 +72,17 @@ def generate_text(request: GenerateTextRequest):
     url = sanitize_url(request.url)
     if not validate_url(url):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid URL format.")
-    # TODO: Replace with actual AI/SEO logic
-    return GenerateTextResponse(
-        titles=[
-            "Premium Wireless Bluetooth Headphones",
-            "High-Quality Bluetooth Headphones for Music Lovers",
-            "Long Battery Life Wireless Headphones"
-        ],
-        description="Experience superior sound quality with our premium wireless Bluetooth headphones. Perfect for music lovers and on-the-go listening.",
-        bulletPoints=[
-            "Crystal clear audio and deep bass",
-            "Up to 30 hours battery life",
-            "Comfortable over-ear design",
-            "Built-in microphone for calls"
-        ],
-        keywordsReport="bluetooth headphones, wireless, premium sound, long battery, music, over-ear"
-    )
+    try:
+        result = generate_listing(url)
+        # Expecting result to be a dict with keys: title, description, bulletPoints, keywordsReport
+        return GenerateTextResponse(
+            titles=[result.get("title", "")],
+            description=result.get("description", ""),
+            bulletPoints=result.get("bullet_points", []),
+            keywordsReport=result.get("keywordsReport", "")
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"ListingCrew error: {str(e)}")
 
 # Mock history data for demonstration
 generation_history = [
