@@ -5,7 +5,7 @@ import validators
 import streamlit as st
 from urllib.parse import urlparse
 from dotenv import load_dotenv
-from src.ListingCrew.crew import ListingCrew # Updated import path
+from crew import ListingCrew # Updated import path
 load_dotenv()
 
 
