@@ -9,6 +9,7 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app/backend
+      - ./src:/app/src
       - ./agents:/app/agents
       - ./tasks:/app/tasks
     environment:

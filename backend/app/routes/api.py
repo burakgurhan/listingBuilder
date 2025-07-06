@@ -11,6 +11,11 @@ from app.models.auth import LoginRequest, RegisterRequest, AuthResponse, ForgotP
 from app.models.product import GenerateTextRequest, GenerateTextResponse
 from fastapi.security import OAuth2PasswordBearer
 from typing import List
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
+
 from src.ListingCrew.main import generate_listing
 
 router = APIRouter()
