@@ -36,7 +36,7 @@ function Dashboard() {
     
     try {
       // Backend integration point: POST /generate_text
-      const response = await fetch('/api/generate_text', {
+      const response = await fetch('/api/v1/generate_text', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
