@@ -254,8 +254,9 @@ function Dashboard() {
             <div className="space-y-3">
               {generatedContent.bulletPoints.map((point, index) => (
                 <div key={index} className="group flex items-start p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                  <div className="flex-1">
-                    <p className="text-gray-900 leading-relaxed">• {point}</p>
+                  <div className="flex-1 flex items-start">
+                    <span className="text-blue-600 mr-2 mt-1">&#8226;</span>
+                    <p className="text-gray-900 leading-relaxed">{point}</p>
                   </div>
                   <button
                     onClick={() => copyToClipboard(`• ${point}`, `Bullet point ${index + 1}`)}
