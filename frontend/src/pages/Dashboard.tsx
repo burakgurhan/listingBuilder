@@ -33,7 +33,7 @@ function Dashboard() {
     }
 
     setIsGenerating(true);
-    
+    setGeneratedContent(null); // Clear previous results
     try {
       // Backend integration point: POST /generate_text
       const response = await fetch('/api/v1/generate_text', {
@@ -45,40 +45,27 @@ function Dashboard() {
         body: JSON.stringify({ url }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate content');
-      }
-
       const data = await response.json();
+      console.log('API response:', data); // Debug log
+      if (!response.ok) {
+        // Show backend error message if available
+        showToast(data.detail || 'Failed to generate content', 'error');
+        setIsGenerating(false);
+        return;
+      }
+      // Check for empty or missing fields
+      if (!data.titles?.length && !data.description && !data.bulletPoints?.length && !data.keywordsReport) {
+        showToast('No content generated. Please try again with a different URL.', 'error');
+        setIsGenerating(false);
+        return;
+      }
       setGeneratedContent(data);
       setEditedDescription(data.description);
       showToast('Content generated successfully!', 'success');
     } catch (error) {
-      // For demo purposes, simulate AI-generated content
-      setTimeout(() => {
-        const mockContent: GeneratedContent = {
-          titles: [
-            "Premium Wireless Bluetooth Headphones - High-Quality Sound & Comfort",
-            "Professional Wireless Headphones with Noise Cancellation Technology",
-            "Ultra-Comfortable Bluetooth Headphones for Music Lovers & Professionals"
-          ],
-          description: "Experience superior audio quality with these premium wireless Bluetooth headphones. Featuring advanced noise cancellation technology, crystal-clear sound, and all-day comfort, these headphones are perfect for music enthusiasts, professionals, and everyday users. The ergonomic design ensures a secure fit during workouts or long listening sessions, while the long-lasting battery provides up to 30 hours of continuous playback. Compatible with all Bluetooth-enabled devices, these headphones deliver exceptional performance whether you're commuting, working, or relaxing at home.",
-          bulletPoints: [
-            "Advanced Bluetooth 5.0 technology for stable, lag-free connection",
-            "Active noise cancellation blocks up to 95% of ambient noise",
-            "30-hour battery life with quick 15-minute charge for 3 hours of playback",
-            "Premium memory foam ear cushions for maximum comfort",
-            "Built-in microphone with crystal-clear call quality",
-            "Foldable design with premium carrying case included"
-          ],
-          keywordsReport: "Primary keywords: wireless headphones, bluetooth headphones, noise cancellation. Secondary keywords: premium audio, long battery life, comfortable fit, professional headphones. SEO score: 85/100. Competitor analysis shows high search volume for 'wireless bluetooth headphones' with medium competition."
-        };
-        
-        setGeneratedContent(mockContent);
-        setEditedDescription(mockContent.description);
-        setIsGenerating(false);
-        showToast('Content generated successfully!', 'success');
-      }, 3000);
+      showToast('Failed to generate content. Please try again later.', 'error');
+    } finally {
+      setIsGenerating(false);
     }
   };
 

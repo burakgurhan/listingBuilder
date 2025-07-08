@@ -3,7 +3,10 @@ from crewai_tools import WebsiteSearchTool, ScrapeWebsiteTool
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task # type: ignore
 from crewai.agents.agent_builder.base_agent import BaseAgent
-from tools.custom_tools import validate_product_info, validate_writing_output
+try:
+    from .tools.custom_tools import validate_product_info, validate_writing_output
+except ImportError:
+    from tools.custom_tools import validate_product_info, validate_writing_output
 from dotenv import load_dotenv
 import time
 import litellm
@@ -31,8 +34,8 @@ class ListingCrew():
             config=self.agents_config['researcher'], # type: ignore[index]
             verbose=True,
             max_iter=10,
-            reasoning=True,
-            max_reasoning_attemts=2,
+            reasoning=False,
+            #max_reasoning_attemts=2,
             respect_context_window=True,
             tools=[WebsiteSearchTool(), ScrapeWebsiteTool()],
         )
@@ -44,7 +47,7 @@ class ListingCrew():
             verbose=True,
             reasoning=True,
             max_reasoning_attemts=2,
-            max_iter=5,
+            max_iter=2,
         )
 
     @task

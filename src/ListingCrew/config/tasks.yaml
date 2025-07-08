@@ -86,6 +86,21 @@ writing_task:
     - **Only use information from the research report** (do not add external context).  
     - Do not include Brand name in the title and description.
 
+    ### Bullet Points Requirements:
+    - Must be exactly **4 sentences** (no more, no less).  
+    - Use best keywords from the report. Use keywords naturally.
+    - Each bullet point should be concise and highlight a key feature or benefit of the product.
+    - Focus on the product's unique selling points and customer benefits.
+    - Ensure clarity and readability for potential buyers.
+    - Do not include Brand name in the bullet points.
+
+    ### Keywords Report:
+    - Create a report of the top keywords used in the title and description.  
+    - Include both **long-tail and short-tail keywords** and phrases.  
+    - Ensure the keywords are relevant to the product and its market.
+    - The keywords report should be concise and easy to read.
+    - Do not include Brand name in the keywords report.
+
     The final output should be well-structured and formatted for easy processing.
     
   expected_output: >
@@ -93,5 +108,7 @@ writing_task:
     {
         "title": "Exactly 80-character product title...",
         "description": "Exactly 4 paragraphs product description..."
+        "bullet_points": "Exactly 4 sentence bullet points...",
+        "keywordsReport": "Make a repost of the top keywords used in the title and description. Include long-tail and short-tail keywords and phrases."
     }
   agent: writer

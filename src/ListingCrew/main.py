@@ -1,11 +1,6 @@
 import os
 import json
-import sys
-
-# Ensure the current directory is in sys.path for direct script or module import
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-from crew import ListingCrew
+from .crew import ListingCrew
 
 # Create output directory if it doesn't exist
 os.makedirs('output', exist_ok=True)

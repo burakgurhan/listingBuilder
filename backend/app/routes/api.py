@@ -79,12 +79,30 @@ def generate_text(request: GenerateTextRequest):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid URL format.")
     try:
         result = generate_listing(url)
-        # Expecting result to be a dict with keys: title, description, bulletPoints, keywordsReport
+        # Ensure all required fields are present, fill with empty values if missing
+        title = result.get("title", "")
+        description = result.get("description", "")
+        result = generate_listing(url)
+        if "raw_output" in result:
+            raise HTTPException(status_code=500, detail="ListingCrew did not return valid structured data.")
+        # ...rest of your code...        # Support both 'bullet_points' and 'bulletPoints' keys, always return a list
+        bullet_points = result.get("bullet_points") or result.get("bulletPoints") or []
+        if isinstance(bullet_points, str):
+            bullet_points = [bullet_points]
+        keywords_report = result.get("keywordsReport", "")
+        # Log a warning if any field is missing
+        missing = []
+        if not title: missing.append("title")
+        if not description: missing.append("description")
+        if not bullet_points: missing.append("bullet_points")
+        if not keywords_report: missing.append("keywordsReport")
+        if missing:
+            print(f"[WARNING] Missing fields in ListingCrew output: {missing}")
         return GenerateTextResponse(
-            titles=[result.get("title", "")],
-            description=result.get("description", ""),
-            bulletPoints=result.get("bullet_points", []),
-            keywordsReport=result.get("keywordsReport", "")
+            titles=[title] if title else [],
+            description=description,
+            bulletPoints=bullet_points,
+            keywordsReport=keywords_report
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"ListingCrew error: {str(e)}")
