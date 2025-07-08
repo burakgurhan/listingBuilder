@@ -286,7 +286,15 @@ function Dashboard() {
             
             {showKeywords && (
               <div className="mt-6 p-6 bg-blue-50 rounded-lg border border-blue-100">
-                <p className="text-gray-800 leading-relaxed">{generatedContent.keywordsReport}</p>
+                {/* Split keywordsReport by newlines, commas, or semicolons and display each on a new line */}
+                {generatedContent.keywordsReport
+                  .split(/\n|,|;/)
+                  .map((kw, idx) => {
+                    const trimmed = kw.trim();
+                    return trimmed ? (
+                      <div key={idx} className="text-gray-800 leading-relaxed mb-1">{trimmed}</div>
+                    ) : null;
+                  })}
                 <button
                   onClick={() => copyToClipboard(generatedContent.keywordsReport, 'Keywords report')}
                   className="mt-4 flex items-center px-4 py-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
