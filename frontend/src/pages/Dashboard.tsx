@@ -227,7 +227,14 @@ function Dashboard() {
                   className="w-full h-48 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 />
               ) : (
-                <p className="text-gray-900 leading-relaxed text-lg">{generatedContent.description}</p>
+                // Split description by double newlines and render as paragraphs
+                generatedContent.description
+                  .split(/\n\s*\n/)
+                  .map((para, idx) => (
+                    <p key={idx} className="text-gray-900 leading-relaxed text-lg mb-4 whitespace-pre-line">
+                      {para}
+                    </p>
+                  ))
               )}
             </div>
           </div>
