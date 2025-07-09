@@ -288,7 +288,7 @@ function Dashboard() {
               <div className="mt-6 p-6 bg-blue-50 rounded-lg border border-blue-100">
                 {/* Split keywordsReport by newlines, commas, or semicolons and display each on a new line */}
                 {generatedContent.keywordsReport
-                  .split(/\n|,|;/)
+                  .split(/\n|\. /)
                   .map((kw, idx) => {
                     const trimmed = kw.trim();
                     return trimmed ? (
