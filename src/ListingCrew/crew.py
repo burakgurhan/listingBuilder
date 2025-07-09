@@ -24,7 +24,7 @@ class ListingCrew():
         return Agent(
             config=self.agents_config['scraper'], # type: ignore[index]
             verbose=True,
-            max_retry_limit=2,
+            max_retry_limit=1,
             tools=[WebsiteSearchTool(), ScrapeWebsiteTool()],
         )
     
@@ -33,7 +33,7 @@ class ListingCrew():
         return Agent(
             config=self.agents_config['researcher'], # type: ignore[index]
             verbose=True,
-            max_iter=10,
+            max_iter=3,
             reasoning=False,
             #max_reasoning_attemts=2,
             respect_context_window=True,
@@ -67,7 +67,7 @@ class ListingCrew():
     def writing_task(self) -> Task:
         return Task(
             config=self.tasks_config['writing_task'], # type: ignore[index]
-            max_retries=2,
+            max_retries=1,
             #guardrail=validate_writing_output
             #output_file='output/report.md'
         )
@@ -114,7 +114,7 @@ class ListingCrew():
             lambda: Crew(
             agents=self.agents,
             tasks=self.tasks,
-            process=Process.sequential,
+            process=Process.parallel, # type: ignore[assignment]
             verbose=True,
             )
         )
