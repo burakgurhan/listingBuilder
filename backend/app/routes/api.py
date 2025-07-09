@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, status, Request
 from sqlalchemy.orm import Session
 from app.database import SessionLocal, init_db
-from app.database.models import User #, GenerationHistory # Assuming you have a GenerationHistory model
+from app.database.models import User, GenerationHistory
 from app.utils.helpers import (
     validate_url, sanitize_url, get_user_by_email, create_user, verify_password
 )
@@ -103,15 +103,15 @@ def generate_text(request: GenerateTextRequest, current_user: User = Depends(get
 
         keywords_report = result.get("keywordsReport", "No Keywords Report Generated")
 
-        # TODO: Save the generation result to the database, associated with the current_user
-        # new_history_item = GenerationHistory(
-        #     user_id=current_user.id,
-        #     url=url,
-        #     title=title,
-        #     status="completed"
-        # )
-        # db.add(new_history_item)
-        # db.commit()
+        # Save the generation result to the database
+        new_history_item = GenerationHistory(
+            user_id=current_user.id,
+            url=url,
+            title=title,
+            status="completed"
+        )
+        db.add(new_history_item)
+        db.commit()
 
         return GenerateTextResponse(
             titles=[title] if title else [],
@@ -126,24 +126,23 @@ def generate_text(request: GenerateTextRequest, current_user: User = Depends(get
 
 @router.get("/history", response_model=List[HistoryItem])
 def get_history(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    # TODO: Replace with actual database query for the GenerationHistory model
-    # history = db.query(GenerationHistory).filter(GenerationHistory.user_id == current_user.id).order_by(GenerationHistory.date.desc()).all()
-    # return history
-    return [] # Return empty list until DB model is implemented
+    # Query the database for generation history belonging to the current user
+    history = db.query(GenerationHistory).filter(GenerationHistory.user_id == current_user.id).order_by(GenerationHistory.date.desc()).all()
+    return history
 
 @router.delete("/history/{item_id}", status_code=status.HTTP_200_OK)
 def delete_history_item(item_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    # TODO: Replace with actual database query
-    # item_to_delete = db.query(GenerationHistory).filter(
-    #     GenerationHistory.id == item_id,
-    #     GenerationHistory.user_id == current_user.id
-    # ).first()
-    #
-    # if not item_to_delete:
-    #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="History item not found.")
-    #
-    # db.delete(item_to_delete)
-    # db.commit()
+    # Find the history item to delete, ensuring it belongs to the current user
+    item_to_delete = db.query(GenerationHistory).filter(
+        GenerationHistory.id == item_id,
+        GenerationHistory.user_id == current_user.id
+    ).first()
+
+    if not item_to_delete:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="History item not found.")
+
+    db.delete(item_to_delete)
+    db.commit()
     return {"message": "History item deleted."}
 
 @router.get("/profile")

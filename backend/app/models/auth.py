@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from typing import Optional
 
 class LoginRequest(BaseModel):
     email: EmailStr
@@ -18,3 +19,6 @@ class ForgotPasswordRequest(BaseModel):
 
 class ForgotPasswordResponse(BaseModel):
     message: str
+
+class ProfileUpdateRequest(BaseModel):
+    email: Optional[EmailStr] = None
