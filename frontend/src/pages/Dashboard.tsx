@@ -252,21 +252,20 @@ function Dashboard() {
               </button>
             </div>
             <div className="space-y-3">
-              {generatedContent.bulletPoints.map((point, index) => (
-                <div key={index} className="group flex items-start p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                  <div className="flex-1 flex items-start">
-                    <span className="text-blue-600 mr-2 mt-1">&#8226;</span>
-                    <p className="text-gray-900 leading-relaxed">{point}</p>
-                  </div>
-                  <button
-                    onClick={() => copyToClipboard(`• ${point}`, `Bullet point ${index + 1}`)}
-                    className="ml-4 opacity-0 group-hover:opacity-100 flex items-center px-3 py-1 text-blue-600 hover:bg-blue-100 rounded transition-all"
-                  >
-                    <Copy className="h-4 w-4 mr-1" />
-                    Copy
-                  </button>
-                </div>
-              ))}
+              <ul className="list-disc pl-6">
+                {generatedContent.bulletPoints.map((point, index) => (
+                  <li key={index} className="text-gray-900 leading-relaxed mb-2">
+                    {point}
+                    <button
+                      onClick={() => copyToClipboard(`• ${point}`, `Bullet point ${index + 1}`)}
+                      className="ml-4 opacity-0 group-hover:opacity-100 inline-flex items-center px-3 py-1 text-blue-600 hover:bg-blue-100 rounded transition-all"
+                    >
+                      <Copy className="h-4 w-4 mr-1" />
+                      Copy
+                    </button>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
 

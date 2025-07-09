@@ -24,7 +24,7 @@ class ListingCrew():
         return Agent(
             config=self.agents_config['scraper'], # type: ignore[index]
             verbose=True,
-            max_retry_limit=3,
+            max_retry_limit=2,
             tools=[WebsiteSearchTool(), ScrapeWebsiteTool()],
         )
     
@@ -45,9 +45,9 @@ class ListingCrew():
         return Agent(
             config=self.agents_config['writer'], # type: ignore[index]
             verbose=True,
-            reasoning=True,
-            max_reasoning_attemts=2,
-            max_iter=2,
+            reasoning=False,
+            #max_reasoning_attemts=2,
+            #max_iter=2,
         )
 
     @task
@@ -92,7 +92,7 @@ class ListingCrew():
                 return func(*args, **kwargs)
             except litellm.RateLimitError as e:
                 # Calculate wait time with exponential backoff
-                wait_time = min(10 * (2 ** attempt), 120)  # Max wait time of 120 seconds
+                wait_time = min(10 * (2 ** attempt), 10)  # Max wait time of 120 seconds
                 
                 print(f"Rate limit error detected. Attempt {attempt + 1}/{self.max_retries}")
                 print(f"Error details: {e}")
