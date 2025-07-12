@@ -33,9 +33,9 @@ class ListingCrew():
         return Agent(
             config=self.agents_config['researcher'], # type: ignore[index]
             verbose=True,
-            max_iter=3,
+            max_iter=2,
             reasoning=False,
-            #max_reasoning_attemts=2,
+            #max_reasoning_attempts=2,
             respect_context_window=True,
             tools=[WebsiteSearchTool(), ScrapeWebsiteTool()],
         )
@@ -46,7 +46,7 @@ class ListingCrew():
             config=self.agents_config['writer'], # type: ignore[index]
             verbose=True,
             reasoning=False,
-            #max_reasoning_attemts=2,
+            #max_reasoning_attempts=2,
             #max_iter=2,
         )
 
@@ -112,9 +112,11 @@ class ListingCrew():
         """Creates the research crew"""
         return self._retry_with_backoff(
             lambda: Crew(
+            name='Listing Crew',
             agents=self.agents,
             tasks=self.tasks,
-            process=Process.parallel, # type: ignore[assignment]
+            process=Process.sequential, # type: ignore[assignment]
             verbose=True,
+            cache=True,
             )
         )
