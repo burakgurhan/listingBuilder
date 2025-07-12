@@ -8,7 +8,7 @@ scraper:
     You're known for your exceptional attention to detail and ability to identify 
     valuable insights from product listings that others might miss.
     You understand product specifications, pricing patterns, and competitive positioning.
-  llm: openai/gpt-4o-mini
+  llm: groq/llama3-8b-8192
 
 
 researcher:
@@ -28,7 +28,7 @@ researcher:
     3. Conducting competitor analysis to identify rival products
     4. Extracting keywords used by competitors
     5. Researching trending and high-value keywords in the market
-  llm: openai/gpt-4o-mini
+  llm: groq/llama3-8b-8192
 
 writer:
   role: >
@@ -46,4 +46,4 @@ writer:
     3. Conducting competitor analysis to identify rival products
     4. Write a product title that is SEO friendly and understandable by customers.
     5. Write a product description that contains competitive keywords and easy to understand by customers.
-  llm: openai/gpt-4o-mini
+  llm: groq/llama3-8b-8192
