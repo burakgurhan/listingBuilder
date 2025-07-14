@@ -12,6 +12,8 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
+    generation_count = Column(Integer, default=0) # Track monthly usage
+    last_reset_date = Column(DateTime, default=datetime.datetime.utcnow) # Track when the count was last reset
 
     history_items = relationship("GenerationHistory", back_populates="owner")
     subscription = relationship("Subscription", back_populates="user", uselist=False, cascade="all, delete-orphan")
@@ -20,7 +22,7 @@ class Plan(Base):
     __tablename__ = "plans"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True, nullable=False) # e.g., "Pro", "Starter"
+    name = Column(String, unique=True, index=True, nullable=False) # e.g., "Freemium", "Starter", "Pro"
     price = Column(Integer, nullable=False) # Store in cents to avoid floating point issues
     generations_limit = Column(Integer, nullable=False)
     stripe_price_id = Column(String, unique=True, nullable=False) # From your Stripe dashboard
