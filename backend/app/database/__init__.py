@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from app.database.models import Base
+from .base import Base
+from .models import User, GenerationHistory, Subscription
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 
@@ -9,3 +10,8 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+
+
+
+
+__all__ = ["Base", "User", "GenerationHistory", "Subscription"]

@@ -22,3 +22,6 @@ class ForgotPasswordResponse(BaseModel):
 
 class ProfileUpdateRequest(BaseModel):
     email: Optional[EmailStr] = None
+class UpdatePasswordRequest(BaseModel):
+    currentPassword: str
+    newPassword: str
