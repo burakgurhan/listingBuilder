@@ -8,7 +8,7 @@ from app.utils.helpers import (
 from app.utils.jwt_utils import create_access_token
 from app.utils.email_utils import send_reset_email
 from app.models.auth import (
-    LoginRequest, RegisterRequest, AuthResponse, ForgotPasswordRequest,
+    LoginRequest, RegisterRequest, AuthResponse, ForgotPasswordRequest, UpdatePasswordRequest,
     ForgotPasswordResponse, ProfileUpdateRequest
 )
 from app.models.product import GenerateTextRequest, GenerateTextResponse, HistoryItem
@@ -145,18 +145,33 @@ def delete_history_item(item_id: int, current_user: User = Depends(get_current_u
     db.commit()
     return {"message": "History item deleted."}
 
-@router.get("/profile")
-def get_profile(current_user: User = Depends(get_current_user)):
-    # TODO: Fetch real subscription data from the database based on the user
-    # For now, returning basic user info.
-    return {
-        "email": current_user.email,
-        "subscription": {
-            "plan": "Pro", # Mock data
-            "status": "active",
-            "renewalDate": "2024-12-31"
-        }
+@router.get("/profile", response_model=dict)
+def get_profile(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    # Fetch user details and subscription information
+    # Assuming a 'Subscription' model exists with a foreign key to User
+    # and fields like plan, status, renewal_date. Adjust according to your DB schema.
+    user = db.query(User).filter(User.id == current_user.id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+
+    subscription_data = {
+        "plan": "Free",  # Default plan
+        "status": "inactive",
+        "renewalDate": None,
     }
+
+    if user.subscription:
+        subscription_data["plan"] = user.subscription.plan
+        subscription_data["status"] = user.subscription.status
+        subscription_data["renewalDate"] = user.subscription.renewal_date.isoformat() if user.subscription.renewal_date else None
+
+    return {
+        "email": user.email,
+        "subscription": subscription_data,
+    }
+
+
+
 
 @router.put("/profile")
 def update_profile(
@@ -180,3 +195,18 @@ def update_profile(
     db.commit()
     db.refresh(current_user)
     return {"message": "Profile updated successfully.", "email": current_user.email}
+
+@router.put("/password", status_code=status.HTTP_200_OK)
+def update_password(
+    request: UpdatePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not verify_password(request.currentPassword, current_user.hashed_password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect current password.")
+
+    current_user.hashed_password = User.get_password_hash(request.newPassword)  # Assuming User model has a method for hashing
+    db.add(current_user)
+    db.commit()
+
+    return {"message": "Password updated successfully."}
