@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends, status, Request
 from sqlalchemy.orm import Session
 from app.database import SessionLocal, init_db
-from app.database.models import User, GenerationHistory
+from app.database.models import User, GenerationHistory, Subscription, Plan
 from app.utils.helpers import (
-    validate_url, sanitize_url, get_user_by_email, create_user, verify_password
+    validate_url, sanitize_url, get_user_by_email, create_user, verify_password, get_password_hash
 )
 from app.utils.jwt_utils import create_access_token
 from app.utils.email_utils import send_reset_email
@@ -12,7 +12,7 @@ from app.models.auth import (
     ForgotPasswordResponse, ProfileUpdateRequest
 )
 from app.models.product import GenerateTextRequest, GenerateTextResponse, HistoryItem
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from typing import List
 import sys
 import os
@@ -31,6 +31,17 @@ def get_db():
         yield db
     finally:
         db.close()
+
+def get_user_by_email(db: Session, email: str):
+    return db.query(User).filter(User.email == email).first()
+
+def create_user(db: Session, email: str, password: str):
+    hashed_password = get_password_hash(password)
+    user = User(email=email, hashed_password=hashed_password)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
 
 @router.on_event("startup")
 def on_startup():
