@@ -54,7 +54,7 @@ class ListingCrew():
     def scraping_task(self) -> Task:
         return Task(
             config=self.tasks_config['scraping_task'], # type: ignore[index]
-            #guardrail=validate_product_info, # type: ignore[arg-type]
+            guardrail=validate_product_info, # type: ignore[arg-type]
         )
 
     @task
@@ -68,7 +68,7 @@ class ListingCrew():
         return Task(
             config=self.tasks_config['writing_task'], # type: ignore[index]
             max_retries=1,
-            #guardrail=validate_writing_output
+            guardrail=validate_writing_output
             #output_file='output/report.md'
         )
 
@@ -92,7 +92,7 @@ class ListingCrew():
                 return func(*args, **kwargs)
             except litellm.RateLimitError as e:
                 # Calculate wait time with exponential backoff
-                wait_time = min(10 * (2 ** attempt), 10)  # Max wait time of 120 seconds
+                wait_time = min(10 * (2 ** attempt), 5)  # Max wait time of 120 seconds
                 
                 print(f"Rate limit error detected. Attempt {attempt + 1}/{self.max_retries}")
                 print(f"Error details: {e}")
