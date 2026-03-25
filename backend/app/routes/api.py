@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal, init_db
 from app.database.models import User, GenerationHistory, Subscription, Plan
 from app.utils.helpers import (
-    validate_url, sanitize_url, get_user_by_email, create_user, verify_password, get_password_hash
+    validate_url, sanitize_url, verify_password, get_password_hash
 )
 from app.utils.jwt_utils import create_access_token
 from app.utils.email_utils import send_reset_email
@@ -11,8 +11,11 @@ from app.models.auth import (
     LoginRequest, RegisterRequest, AuthResponse, ForgotPasswordRequest, UpdatePasswordRequest,
     ForgotPasswordResponse, ProfileUpdateRequest
 )
-from app.models.product import GenerateTextRequest, GenerateTextResponse, HistoryItem
+from app.models.product import GenerateTextRequest, GenerateTextResponse, HistoryItemResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import BackgroundTasks
+from app.database.models import GenerationStatus
+from app.services.ai_service import process_listing_background
 from typing import List
 import sys
 import os
@@ -94,48 +97,41 @@ def forgot_password(
     send_reset_email(user.email, reset_link)
     return ForgotPasswordResponse(message="Password reset email sent successfully!")
 
-@router.post("/generate_text", response_model=GenerateTextResponse)
-def generate_text(request: GenerateTextRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+@router.post("/generate", response_model=GenerateTextResponse)
+def generate_text(request: GenerateTextRequest, background_tasks: BackgroundTasks, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     url = sanitize_url(request.url)
     if not validate_url(url):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid URL format.")
     
-    try:
-        result = generate_listing(url)
+    # Save the generation result to the database as pending
+    new_history_item = GenerationHistory(
+        user_id=current_user.id,
+        url=url,
+        title=None,
+        status=GenerationStatus.pending
+    )
+    db.add(new_history_item)
+    db.commit()
+    db.refresh(new_history_item)
 
-        if not isinstance(result, dict) or "raw_output" in result:
-            raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Failed to get structured data from ListingCrew.")
+    # Start background execution
+    background_tasks.add_task(process_listing_background, new_history_item.id, url)
 
-        title = result.get("title", "No Title Generated")
-        description = result.get("description", "No Description Generated")
-        bullet_points = result.get("bullet_points", result.get("bulletPoints", []))
-        if isinstance(bullet_points, str):
-            bullet_points = [bp.strip() for bp in bullet_points.split('\n') if bp.strip()] # Handle string-formatted lists
+    return GenerateTextResponse(
+        id=new_history_item.id,
+        url=url,
+        status=new_history_item.status,
+        message="Listing generation started in the background."
+    )
 
-        keywords_report = result.get("keywordsReport", "No Keywords Report Generated")
+@router.get("/status/{item_id}", response_model=HistoryItemResponse)
+def get_task_status(item_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    item = db.query(GenerationHistory).filter(GenerationHistory.id == item_id, GenerationHistory.user_id == current_user.id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return item
 
-        # Save the generation result to the database
-        new_history_item = GenerationHistory(
-            user_id=current_user.id,
-            url=url,
-            title=title,
-            status="completed"
-        )
-        db.add(new_history_item)
-        db.commit()
-
-        return GenerateTextResponse(
-            titles=[title] if title else [],
-            description=description,
-            bulletPoints=bullet_points,
-            keywordsReport=keywords_report
-        )
-    except Exception as e:
-        # Log the full error for debugging
-        print(f"Error during listing generation for URL {url}: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An internal error occurred: {str(e)}")
-
-@router.get("/history", response_model=List[HistoryItem])
+@router.get("/history", response_model=List[HistoryItemResponse])
 def get_history(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     # Query the database for generation history belonging to the current user
     history = db.query(GenerationHistory).filter(GenerationHistory.user_id == current_user.id).order_by(GenerationHistory.date.desc()).all()

@@ -1,17 +1,14 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from .base import Base
-from .models import User, GenerationHistory, Subscription
+from .models import User, GenerationHistory, Subscription, Plan
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+SQLALCHEMY_DATABASE_URL = "sqlite:///./listingBuilder.db"
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def init_db():
-    Base.metadata.create_all(bind=engine)
+    pass # Managed by alembic now
 
-
-
-
-__all__ = ["Base", "User", "GenerationHistory", "Subscription"]
+__all__ = ["Base", "User", "GenerationHistory", "Subscription", "Plan", "SessionLocal", "init_db", "engine"]

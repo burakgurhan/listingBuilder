@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Wand2, Copy, Edit3, ChevronDown, ChevronUp, Loader2, ExternalLink } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { apiClient } from '../api/client';
 
 interface GeneratedContent {
   titles: string[];
@@ -24,7 +25,6 @@ function Dashboard() {
       return;
     }
 
-    // Basic URL validation
     try {
       new URL(url);
     } catch {
@@ -33,37 +33,41 @@ function Dashboard() {
     }
 
     setIsGenerating(true);
-    setGeneratedContent(null); // Clear previous results
+    setGeneratedContent(null);
     try {
-      // Backend integration point: POST /generate_text
-      const response = await fetch('/api/v1/generate_text', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        },
-        body: JSON.stringify({ url }),
-      });
+      // 1. Trigger the background generation task
+      const startResponse = await apiClient.post('/generate', { url });
+      const taskId = startResponse.data.id;
 
-      const data = await response.json();
-      console.log('API response:', data); // Debug log
-      if (!response.ok) {
-        // Show backend error message if available
-        showToast(data.detail || 'Failed to generate content', 'error');
-        setIsGenerating(false);
-        return;
+      // 2. Poll the status endpoints
+      let isComplete = false;
+      while (!isComplete) {
+        // Sleep for 3 seconds before next poll
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        const statusResponse = await apiClient.get(`/status/${taskId}`);
+        const statusData = statusResponse.data;
+
+        if (statusData.status === 'completed') {
+           // Task is finished
+           isComplete = true;
+           const newContent = {
+             titles: [statusData.title || 'No Title Generated'],
+             description: statusData.description || '',
+             bulletPoints: statusData.bullet_points ? statusData.bullet_points.split('\n') : [],
+             keywordsReport: statusData.keywords_report || ''
+           };
+           setGeneratedContent(newContent);
+           setEditedDescription(newContent.description);
+           showToast('Content generated successfully!', 'success');
+        } else if (statusData.status === 'failed') {
+           isComplete = true;
+           showToast('Failed to generate content. Please try again.', 'error');
+        }
+        // If pending or processing, it loops.
       }
-      // Check for empty or missing fields
-      if (!data.titles?.length && !data.description && !data.bulletPoints?.length && !data.keywordsReport) {
-        showToast('No content generated. Please try again with a different URL.', 'error');
-        setIsGenerating(false);
-        return;
-      }
-      setGeneratedContent(data);
-      setEditedDescription(data.description);
-      showToast('Content generated successfully!', 'success');
-    } catch (error) {
-      showToast('Failed to generate content. Please try again later.', 'error');
+    } catch (error: any) {
+      const msg = error.response?.data?.detail || 'Failed to start generation.';
+      showToast(msg, 'error');
     } finally {
       setIsGenerating(false);
     }

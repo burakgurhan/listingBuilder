@@ -1,19 +1,33 @@
-import React, { useState } from 'react';
-import { User, CreditCard, Settings, Calendar, Crown, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, CreditCard, Settings, Crown, Check } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { apiClient } from '../api/client';
 
 function Profile() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('account');
+  const [profileData, setProfileData] = useState<any>(null);
 
-  // Mock subscription data
-  const subscriptionData = {
-    plan: 'Pro',
-    status: 'active',
-    renewalDate: '2024-02-15',
-    daysLeft: 25,
-    generationsUsed: 157,
-    generationsLimit: 1000
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const response = await apiClient.get('/profile');
+        setProfileData(response.data);
+      } catch (error) {
+        console.error('Failed to load profile', error);
+      }
+    };
+    loadProfile();
+  }, []);
+
+  // Use dynamic or Mock subscription data
+  const subscriptionData = profileData?.subscription || {
+    plan: 'Free',
+    status: 'inactive',
+    renewalDate: new Date().toISOString(),
+    daysLeft: 0,
+    generationsUsed: 0,
+    generationsLimit: 10
   };
 
   const plans = [

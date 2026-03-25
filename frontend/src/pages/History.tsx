@@ -1,31 +1,45 @@
-import React from 'react';
-import { History as HistoryIcon, Calendar, ExternalLink, Trash2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { History as HistoryIcon, Calendar, ExternalLink, Trash2, Loader2 } from 'lucide-react';
+import { apiClient } from '../api/client';
+import { useAuth } from '../contexts/AuthContext';
+
+interface HistoryItem {
+  id: number;
+  url: string;
+  date: string;
+  title: string | null;
+  status: string;
+}
 
 function History() {
-  // Mock data for demonstration
-  const historyItems = [
-    {
-      id: 1,
-      url: 'https://www.amazon.com/dp/B0BP7M5F3M',
-      date: '2024-01-15',
-      title: 'Premium Wireless Bluetooth Headphones',
-      status: 'completed'
-    },
-    {
-      id: 2,
-      url: 'https://www.amazon.com/dp/B08N5WRWNW',
-      date: '2024-01-14',
-      title: 'Smart Home Security Camera',
-      status: 'completed'
-    },
-    {
-      id: 3,
-      url: 'https://www.amazon.com/dp/B07XJ8C8F5',
-      date: '2024-01-13',
-      title: 'Portable Phone Charger',
-      status: 'completed'
+  const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { showToast } = useAuth();
+
+  const fetchHistory = async () => {
+    try {
+      const response = await apiClient.get('/history');
+      setHistoryItems(response.data);
+    } catch (error) {
+      showToast('Failed to load history', 'error');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  const handleDelete = async (id: number) => {
+    try {
+      await apiClient.delete(`/history/${id}`);
+      setHistoryItems(prev => prev.filter(item => item.id !== id));
+      showToast('Item deleted', 'success');
+    } catch (error) {
+      showToast('Failed to delete item', 'error');
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -35,7 +49,12 @@ function History() {
       </div>
 
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100">
-        {historyItems.length === 0 ? (
+        {loading ? (
+          <div className="p-12 text-center">
+            <Loader2 className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" />
+            <p className="text-gray-600">Loading history...</p>
+          </div>
+        ) : historyItems.length === 0 ? (
           <div className="p-12 text-center">
             <HistoryIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No history yet</h3>
@@ -65,13 +84,17 @@ function History() {
                   {historyItems.map((item) => (
                     <tr key={item.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{item.title}</div>
-                        <div className="text-sm text-gray-500">Generated content</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {item.title || (item.status === 'pending' || item.status === 'processing' ? 'Generating...' : 'Untitled')}
+                        </div>
+                        <div className="text-xs mt-1 text-gray-500 uppercase tracking-wide">
+                          Status: <span className={item.status === 'completed' ? 'text-green-600' : (item.status === 'failed' ? 'text-red-500' : 'text-blue-500')}>{item.status}</span>
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center text-sm text-blue-600">
-                          <ExternalLink className="h-4 w-4 mr-1" />
-                          <span className="truncate max-w-xs">{item.url}</span>
+                          <ExternalLink className="h-4 w-4 mr-1 min-w-4" />
+                          <a href={item.url} target="_blank" rel="noopener noreferrer" className="truncate max-w-[200px] inline-block hover:underline">{item.url}</a>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -82,10 +105,7 @@ function History() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-3">
-                          <button className="text-blue-600 hover:text-blue-900">
-                            View
-                          </button>
-                          <button className="text-red-600 hover:text-red-900">
+                          <button onClick={() => handleDelete(item.id)} className="text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded-full transition-colors">
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>

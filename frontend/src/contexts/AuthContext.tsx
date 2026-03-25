@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { apiClient } from '../api/client';
 
 interface User {
   id: string;
@@ -29,7 +30,7 @@ export function useAuth() {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start as loading to check auth first
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   const showToast = (message: string, type: 'success' | 'error' | 'info') => {
@@ -37,31 +38,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setTimeout(() => setToast(null), 5000);
   };
 
+  const checkAuth = async () => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      try {
+        const response = await apiClient.get('/profile');
+        setUser({ id: response.data.email, email: response.data.email }); // Adjust ID mapping depending on API response if id isn't there
+      } catch (error) {
+        console.error('Auth verification failed', error);
+        localStorage.removeItem('authToken');
+        setUser(null);
+      }
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    checkAuth();
+    
+    // Listen for unauthorized events to gracefully logout
+    const handleUnauthorized = () => {
+      setUser(null);
+      showToast('Session expired. Please log in again.', 'error');
+    };
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+  }, []);
+
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      // Backend integration point: POST /login
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Invalid credentials');
-      }
-
-      const data = await response.json();
-      setUser(data.user);
-      localStorage.setItem('authToken', data.token);
+      const response = await apiClient.post('/login', { email, password });
+      const data = response.data;
+      localStorage.setItem('authToken', data.access_token);
+      await checkAuth();
       showToast('Successfully logged in!', 'success');
-    } catch (error) {
-      // For demo purposes, simulate successful login
-      setUser({ id: '1', email });
-      localStorage.setItem('authToken', 'demo-token');
-      showToast('Successfully logged in!', 'success');
+    } catch (error: any) {
+      const msg = error.response?.data?.detail || 'Invalid credentials';
+      showToast(msg, 'error');
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -70,68 +85,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (email: string, password: string, confirmPassword: string) => {
     if (password !== confirmPassword) {
       showToast('Passwords do not match', 'error');
-      return;
+      throw new Error('Passwords do not match');
     }
 
     if (password.length < 6) {
       showToast('Password must be at least 6 characters', 'error');
-      return;
+      throw new Error('Password too short');
     }
 
     setLoading(true);
     try {
-      // Backend integration point: POST /register
-      const response = await fetch('/api/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Registration failed');
-      }
-
-      const data = await response.json();
-      setUser(data.user);
-      localStorage.setItem('authToken', data.token);
+      const response = await apiClient.post('/register', { email, password, confirmPassword });
+      const data = response.data;
+      localStorage.setItem('authToken', data.access_token);
+      await checkAuth();
       showToast('Account created successfully!', 'success');
-    } catch (error) {
-      // For demo purposes, simulate successful registration
-      setUser({ id: '1', email });
-      localStorage.setItem('authToken', 'demo-token');
-      showToast('Account created successfully!', 'success');
+    } catch (error: any) {
+      const msg = error.response?.data?.detail || 'Registration failed';
+      showToast(msg, 'error');
+      throw error;
     } finally {
       setLoading(false);
     }
   };
 
-  const logout = async () => {
-    try {
-      // Backend integration point: POST /logout
-      await fetch('/api/logout', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        },
-      });
-    } catch (error) {
-      console.log('Logout error:', error);
-    }
-
+  const logout = () => {
     setUser(null);
     localStorage.removeItem('authToken');
     showToast('Logged out successfully', 'info');
   };
-
-  useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      // For demo purposes, assume user is authenticated
-      setUser({ id: '1', email: 'demo@example.com' });
-    }
-  }, []);
 
   const value = {
     user,
@@ -144,5 +126,5 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     toast,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
 }
