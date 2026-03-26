@@ -1,0 +1,17 @@
+fastapi[all]
+uvicorn
+sqlalchemy
+alembic
+pydantic-settings
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+python-dotenv
+litellm
+crewai
+crewai-tools
+langchain
+pydantic
+openai
+groq
+    

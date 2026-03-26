@@ -8,13 +8,14 @@ class Settings(BaseSettings):
     GROQ_API_KEY: str
     
     # Database
-    DATABASE_URL: str = "mysql://user:password@localhost/listingBuilder"
+    DATABASE_URL: str = "sqlite:///./listingBuilder.db"
     
     # API Settings
     API_V1_STR: str = "/api/v1"
+    FRONTEND_URL: str = "http://localhost:3000"
     
     class Config:
-        env_file = ".env"
+        env_file = "../.env"
 
 @lru_cache()
 def get_settings() -> Settings:
