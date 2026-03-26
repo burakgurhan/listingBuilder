@@ -70,14 +70,14 @@ def test_update_profile(client, auth_token):
     assert data["message"] == "Profile updated successfully."
     assert data["email"] == new_email
 
-@patch("app.routes.api.generate_listing")
+@patch("app.services.ai_service.ai_main.generate_listing")
 def test_generate_text_and_history(mock_generate_listing, client, auth_token):
     # 1. Check that history is initially empty
     headers = {"Authorization": f"Bearer {auth_token}"}
     response = client.get("/api/v1/history", headers=headers)
     assert response.status_code == 200
     assert response.json() == []
- 
+
     # 2. Mock the external call and generate text
     mock_data = {
         "title": "Generated Title",
@@ -88,19 +88,22 @@ def test_generate_text_and_history(mock_generate_listing, client, auth_token):
     mock_generate_listing.return_value = mock_data
     
     gen_response = client.post(
-        "/api/v1/generate_text",
+        "/api/v1/generate",
         headers=headers,
         json={"url": "https://www.example.com"}
     )
     assert gen_response.status_code == 200
     gen_data = gen_response.json()
-    assert gen_data["titles"] == [mock_data["title"]]
-    assert gen_data["description"] == mock_data["description"]
-    assert gen_data["bulletPoints"] == mock_data["bullet_points"]
-    assert gen_data["keywordsReport"] == mock_data["keywordsReport"]
-    mock_generate_listing.assert_called_once_with("https://www.example.com")
+    # Now it returns a background task confirmation
+    assert "id" in gen_data
+    assert gen_data["url"] == "https://www.example.com"
+
+
+
 
     # 3. Check history again to see the new item
+    # Since FastAPI TestClient executes background tasks synchronously after returning the response,
+    # the database should now have the completed status.
     response = client.get("/api/v1/history", headers=headers)
     assert response.status_code == 200
     history_data = response.json()
@@ -109,6 +112,8 @@ def test_generate_text_and_history(mock_generate_listing, client, auth_token):
     assert history_item["title"] == "Generated Title"
     assert history_item["url"] == "https://www.example.com"
     assert history_item["status"] == "completed"
+
+
     item_id = history_item["id"]
 
     # 4. Delete the history item
@@ -142,5 +147,30 @@ def test_forgot_password_user_not_found(client):
         "/api/v1/forgot-password",
         json={"email": "nonexistent@example.com"},
     )
-    assert response.status_code == 404
-    assert response.json() == {"detail": "User not found."}
+    # BUG-3 FIX: Always return 200 to avoid leaking whether an email is registered
+    assert response.status_code == 200
+    assert response.json() == {"message": "Password reset email sent successfully!"}
+
+def test_reset_password(client, test_user):
+    response = client.post(
+        "/api/v1/reset-password",
+        json={
+            "email": test_user["email"],
+            "token": "demo-token",
+            "newPassword": "newsecurepassword"
+        },
+    )
+    assert response.status_code == 200
+    assert response.json() == {"message": "Password reset successfully."}
+
+def test_reset_password_invalid_token(client, test_user):
+    response = client.post(
+        "/api/v1/reset-password",
+        json={
+            "email": test_user["email"],
+            "token": "invalid-token",
+            "newPassword": "newsecurepassword"
+        },
+    )
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Invalid or expired reset token."}

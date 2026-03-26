@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Wand2, ArrowLeft, Mail, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { apiClient } from '../api/client';
 
 function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -17,7 +18,6 @@ function ForgotPassword() {
       return;
     }
 
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       showToast('Please enter a valid email address', 'error');
@@ -25,30 +25,17 @@ function ForgotPassword() {
     }
 
     setLoading(true);
-    
     try {
-      // Backend integration point: POST /forgot-password
-      const response = await fetch('/api/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to send reset email');
-      }
-
+      // BUG-10 FIX: Use apiClient with the correct route path instead of raw fetch with wrong URL
+      await apiClient.post('/forgot-password', { email });
       setIsSubmitted(true);
       showToast('Password reset email sent successfully!', 'success');
-    } catch (error) {
-      // For demo purposes, simulate successful email sending
-      setTimeout(() => {
-        setIsSubmitted(true);
-        setLoading(false);
-        showToast('Password reset email sent successfully!', 'success');
-      }, 2000);
+    } catch (error: any) {
+      // BUG-11 FIX: Show real error message instead of faking success in the catch block
+      const msg = error.response?.data?.detail || 'Failed to send reset email. Please try again.';
+      showToast(msg, 'error');
+    } finally {
+      setLoading(false);
     }
   };
 

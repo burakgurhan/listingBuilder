@@ -3,6 +3,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import api
+from app.database import init_db
 from config.settings import Settings
 
 # Add the project root directory to the Python path
@@ -17,7 +18,11 @@ def create_app() -> FastAPI:
 
     from config.settings import get_settings
     settings = get_settings()
-    
+
+    # BUG-6 FIX: init_db() must be called here; @router.on_event("startup")
+    # on an APIRouter is silently ignored by FastAPI.
+    init_db()
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
@@ -31,10 +36,11 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(api.router, prefix="/api/v1")
+
+    @app.get("/")
+    def read_root():
+        return {"message": "Backend is running. Use /api/v1 for API endpoints."}
+
     return app
 
 app = create_app()
-
-@app.get("/")
-def read_root():
-    return {"message": "Backend is running. Use /api/v1 for API endpoints."}

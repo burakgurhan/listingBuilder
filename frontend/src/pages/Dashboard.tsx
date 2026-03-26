@@ -258,7 +258,7 @@ function Dashboard() {
             <div className="space-y-3">
               <ul className="list-disc pl-6">
                 {generatedContent.bulletPoints.map((point, index) => (
-                  <li key={index} className="text-gray-900 leading-relaxed mb-2">
+                  <li key={index} className="group text-gray-900 leading-relaxed mb-2">
                     {point}
                     <button
                       onClick={() => copyToClipboard(`• ${point}`, `Bullet point ${index + 1}`)}

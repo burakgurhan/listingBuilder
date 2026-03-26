@@ -17,6 +17,9 @@ class HistoryItemResponse(BaseModel):
     url: str
     date: datetime
     title: Optional[str] = None
+    description: Optional[str] = None
+    bullet_points: Optional[str] = None
+    keywords_report: Optional[str] = None
     status: GenerationStatus
 
     class Config:

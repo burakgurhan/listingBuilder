@@ -9,6 +9,7 @@ engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def init_db():
-    pass # Managed by alembic now
+    Base.metadata.create_all(bind=engine)
+
 
 __all__ = ["Base", "User", "GenerationHistory", "Subscription", "Plan", "SessionLocal", "init_db", "engine"]

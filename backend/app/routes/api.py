@@ -9,7 +9,7 @@ from app.utils.jwt_utils import create_access_token
 from app.utils.email_utils import send_reset_email
 from app.models.auth import (
     LoginRequest, RegisterRequest, AuthResponse, ForgotPasswordRequest, UpdatePasswordRequest,
-    ForgotPasswordResponse, ProfileUpdateRequest
+    ForgotPasswordResponse, ProfileUpdateRequest, ResetPasswordRequest
 )
 from app.models.product import GenerateTextRequest, GenerateTextResponse, HistoryItemResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -46,9 +46,8 @@ def create_user(db: Session, email: str, password: str):
     db.refresh(user)
     return user
 
-@router.on_event("startup")
-def on_startup():
-    init_db()
+# NOTE: init_db() is called from app/main.py create_app() — not here,
+# because @router.on_event is not supported on APIRouter instances.
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login")
 
@@ -87,15 +86,26 @@ def forgot_password(
     settings: Settings = Depends(get_settings)
 ):
     user = get_user_by_email(db, request.email)
+    # BUG-3 FIX: Always return success to avoid leaking whether an email is registered
+    if user:
+        reset_link = f"{settings.FRONTEND_URL}/reset-password?email={user.email}&token=demo-token"
+        send_reset_email(user.email, reset_link)
+    return ForgotPasswordResponse(message="Password reset email sent successfully!")
+
+@router.post("/reset-password")
+def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db)):
+    user = get_user_by_email(db, request.email)
     if not user:
-        # Note: For security, you might not want to reveal if an email exists.
-        # Returning a success message regardless is a common practice.
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
     
-    # Generate a reset link using frontend URL from settings
-    reset_link = f"{settings.FRONTEND_URL}/reset-password?email={user.email}"
-    send_reset_email(user.email, reset_link)
-    return ForgotPasswordResponse(message="Password reset email sent successfully!")
+    # In a real app, verify request.token here
+    if request.token != "demo-token":
+         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset token.")
+
+    user.hashed_password = get_password_hash(request.newPassword)
+    db.add(user)
+    db.commit()
+    return {"message": "Password reset successfully."}
 
 @router.post("/generate", response_model=GenerateTextResponse)
 def generate_text(request: GenerateTextRequest, background_tasks: BackgroundTasks, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -171,8 +181,13 @@ def get_profile(current_user: User = Depends(get_current_user), db: Session = De
         subscription_data["plan"] = user.subscription.plan
         subscription_data["status"] = user.subscription.status
         subscription_data["renewalDate"] = user.subscription.renewal_date.isoformat() if user.subscription.renewal_date else None
+    else:
+        # Ensure a default subscription exists in the DB or just return the default data
+        # For now, we return the default data but could also create a Free subscription record here.
+        pass
 
     return {
+        "id": user.id,
         "email": user.email,
         "subscription": subscription_data,
     }
@@ -212,7 +227,8 @@ def update_password(
     if not verify_password(request.currentPassword, current_user.hashed_password):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect current password.")
 
-    current_user.hashed_password = User.get_password_hash(request.newPassword)  # Assuming User model has a method for hashing
+    # BUG-2 FIX: User.get_password_hash() doesn't exist; use the imported helper directly
+    current_user.hashed_password = get_password_hash(request.newPassword)
     db.add(current_user)
     db.commit()
 

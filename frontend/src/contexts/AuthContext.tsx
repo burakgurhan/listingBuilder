@@ -126,5 +126,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     toast,
   };
 
-  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
+  // BUG-18 FIX: Show a spinner instead of nothing while auth state is being resolved.
+  // The previous `{!loading && children}` caused a flash of blank page on every reload.
+  return (
+    <AuthContext.Provider value={value}>
+      {loading ? (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+        </div>
+      ) : (
+        children
+      )}
+    </AuthContext.Provider>
+  );
 }

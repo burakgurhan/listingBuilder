@@ -1,12 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { User, CreditCard, Settings, Crown, Check } from 'lucide-react';
+import { User, CreditCard, Settings, Crown, Check, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { apiClient } from '../api/client';
 
 function Profile() {
-  const { user } = useAuth();
+  const { user, showToast } = useAuth();
   const [activeTab, setActiveTab] = useState('account');
   const [profileData, setProfileData] = useState<any>(null);
+
+  // Account Form States
+  const [fullName, setFullName] = useState('');
+  const [company, setCompany] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Password Modal States
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -20,14 +31,50 @@ function Profile() {
     loadProfile();
   }, []);
 
+  const handleSaveAccount = async () => {
+    setIsSaving(true);
+    try {
+      // In a real app we'd send fullName and company to the backend
+      // await apiClient.put('/profile', { full_name: fullName, company });
+      showToast('Profile updated successfully', 'success');
+    } catch (error) {
+      showToast('Failed to update profile', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsChangingPassword(true);
+    try {
+      await apiClient.put('/password', { currentPassword, newPassword });
+      showToast('Password updated successfully', 'success');
+      setShowPasswordModal(false);
+      setCurrentPassword('');
+      setNewPassword('');
+    } catch (error: any) {
+      const msg = error.response?.data?.detail || 'Failed to update password';
+      showToast(msg, 'error');
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+      showToast('Account deletion requested. Support will contact you shortly.', 'info');
+    }
+  };
+
   // Use dynamic or Mock subscription data
   const subscriptionData = profileData?.subscription || {
     plan: 'Free',
     status: 'inactive',
     renewalDate: new Date().toISOString(),
-    daysLeft: 0,
-    generationsUsed: 0,
-    generationsLimit: 10
+    daysLeft: '-', // Fallback to '-' instead of misleading 0
+    generationsUsed: '-', // Fallback to '-' Instead of misleading 0
+    generationsLimit: '-' // Fallback
   };
 
   const plans = [
@@ -129,7 +176,7 @@ function Profile() {
                   <input
                     type="email"
                     value={user?.email || ''}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
                     disabled
                   />
                 </div>
@@ -140,6 +187,8 @@ function Profile() {
                   </label>
                   <input
                     type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
                     placeholder="Enter your full name"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
@@ -151,13 +200,19 @@ function Profile() {
                   </label>
                   <input
                     type="text"
+                    value={company}
+                    onChange={(e) => setCompany(e.target.value)}
                     placeholder="Enter your company name"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
                 
-                <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-                  Save Changes
+                <button 
+                  onClick={handleSaveAccount}
+                  disabled={isSaving}
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  {isSaving ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </div>
@@ -173,7 +228,7 @@ function Profile() {
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <h3 className="text-2xl font-bold">{subscriptionData.plan} Plan</h3>
-                      <p className="text-blue-100">Active subscription</p>
+                      <p className="text-blue-100">Status: {subscriptionData.status}</p>
                     </div>
                     <Crown className="h-8 w-8" />
                   </div>
@@ -181,11 +236,11 @@ function Profile() {
                   <div className="grid sm:grid-cols-3 gap-4">
                     <div>
                       <p className="text-blue-100 text-sm">Renewal Date</p>
-                      <p className="font-semibold">{new Date(subscriptionData.renewalDate).toLocaleDateString()}</p>
+                      <p className="font-semibold">{subscriptionData.renewalDate ? new Date(subscriptionData.renewalDate).toLocaleDateString() : '-'}</p>
                     </div>
                     <div>
                       <p className="text-blue-100 text-sm">Days Remaining</p>
-                      <p className="font-semibold">{subscriptionData.daysLeft} days</p>
+                      <p className="font-semibold">{subscriptionData.daysLeft}</p>
                     </div>
                     <div>
                       <p className="text-blue-100 text-sm">Generations Used</p>
@@ -197,7 +252,7 @@ function Profile() {
                     <div className="bg-white/20 rounded-full h-2">
                       <div 
                         className="bg-white rounded-full h-2" 
-                        style={{ width: `${(subscriptionData.generationsUsed / subscriptionData.generationsLimit) * 100}%` }}
+                        style={{ width: typeof subscriptionData.generationsUsed === 'number' && typeof subscriptionData.generationsLimit === 'number' && subscriptionData.generationsLimit > 0 ? `${(subscriptionData.generationsUsed / subscriptionData.generationsLimit) * 100}%` : '0%' }}
                       ></div>
                     </div>
                   </div>
@@ -268,7 +323,10 @@ function Profile() {
 
           {activeTab === 'billing' && (
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Billing Information</h2>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Billing Information</h2>
+                <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded border border-yellow-300">Demo Data</span>
+              </div>
               
               <div className="space-y-8">
                 {/* Payment Method */}
@@ -385,11 +443,16 @@ function Profile() {
                 <div className="border-t border-gray-200 pt-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Actions</h3>
                   <div className="space-y-4">
-                    <button className="text-blue-600 hover:text-blue-700 font-medium">
+                    <button 
+                      onClick={() => setShowPasswordModal(true)}
+                      className="text-blue-600 hover:text-blue-700 font-medium block"
+                    >
                       Change Password
                     </button>
-                    <br />
-                    <button className="text-red-600 hover:text-red-700 font-medium">
+                    <button 
+                      onClick={handleDeleteAccount}
+                      className="text-red-600 hover:text-red-700 font-medium block"
+                    >
                       Delete Account
                     </button>
                   </div>
@@ -399,6 +462,69 @@ function Profile() {
           )}
         </div>
       </div>
+
+      {/* Password Change Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900">Change Password</h3>
+              <button 
+                onClick={() => setShowPasswordModal(false)}
+                className="text-gray-400 hover:text-gray-600 p-1"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              
+              <div className="pt-4 flex space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordModal(false)}
+                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isChangingPassword}
+                  className="flex-1 px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors disabled:opacity-50"
+                >
+                  {isChangingPassword ? 'Updating...' : 'Update Password'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

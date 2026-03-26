@@ -2,7 +2,8 @@ import logging
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.database.models import GenerationHistory, GenerationStatus
-from src.ListingCrew.main import generate_listing
+from src.ListingCrew import main as ai_main
+
 
 logger = logging.getLogger(__name__)
 
@@ -11,6 +12,7 @@ def process_listing_background(history_id: int, url: str):
     Background worker to run CrewAI task and update DB.
     """
     db = SessionLocal()
+    history_item = None  # BUG-9: Initialize to None so except block can safely reference it
     try:
         # Mark as processing
         history_item = db.query(GenerationHistory).filter(GenerationHistory.id == history_id).first()
@@ -22,10 +24,12 @@ def process_listing_background(history_id: int, url: str):
         db.commit()
 
         # Run Heavy AI Task
-        result = generate_listing(url)
+        result = ai_main.generate_listing(url)
 
-        if not isinstance(result, dict) or "raw_output" in result:
-            logger.error(f"Structured result failed for {url}")
+
+        # BUG-1 FIX: Check that result is a valid dict with expected keys (inverted logic was here before)
+        if not isinstance(result, dict) or "title" not in result:
+            logger.error(f"Structured result failed for {url}. Got: {result}")
             history_item.status = GenerationStatus.failed
             db.commit()
             return
@@ -50,7 +54,8 @@ def process_listing_background(history_id: int, url: str):
 
     except Exception as e:
         logger.error(f"Error processing {url}: {e}")
-        history_item.status = GenerationStatus.failed
-        db.commit()
+        if history_item is not None:  # BUG-9: Guard against unbound variable
+            history_item.status = GenerationStatus.failed
+            db.commit()
     finally:
         db.close()
