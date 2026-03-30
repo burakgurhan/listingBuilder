@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { apiClient } from '../api/client';
+import { supabase } from '../lib/supabaseClient';
 
 interface User {
   id: string;
@@ -39,42 +39,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const checkAuth = async () => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      try {
-        const response = await apiClient.get('/profile');
-        setUser({ id: response.data.email, email: response.data.email }); // Adjust ID mapping depending on API response if id isn't there
-      } catch (error) {
-        console.error('Auth verification failed', error);
-        localStorage.removeItem('authToken');
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // Sync with backend profile if needed, or just set user from Supabase
+        setUser({ id: user.id, email: user.email || '' });
+      } else {
         setUser(null);
       }
+    } catch (error) {
+      console.error('Auth verification failed', error);
+      setUser(null);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
+    // Initial check
     checkAuth();
-    
-    // Listen for unauthorized events to gracefully logout
-    const handleUnauthorized = () => {
-      setUser(null);
-      showToast('Session expired. Please log in again.', 'error');
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: any) => {
+      if (session?.user) {
+        setUser({ id: session.user.id, email: session.user.email || '' });
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
     };
-    window.addEventListener('auth:unauthorized', handleUnauthorized);
-    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
   }, []);
 
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const response = await apiClient.post('/login', { email, password });
-      const data = response.data;
-      localStorage.setItem('authToken', data.access_token);
-      await checkAuth();
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
       showToast('Successfully logged in!', 'success');
     } catch (error: any) {
-      const msg = error.response?.data?.detail || 'Invalid credentials';
+      const msg = error.message || 'Invalid credentials';
       showToast(msg, 'error');
       throw error;
     } finally {
@@ -95,13 +102,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setLoading(true);
     try {
-      const response = await apiClient.post('/register', { email, password, confirmPassword });
-      const data = response.data;
-      localStorage.setItem('authToken', data.access_token);
-      await checkAuth();
-      showToast('Account created successfully!', 'success');
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) throw error;
+      showToast('Account created! Please check your email for verification.', 'success');
     } catch (error: any) {
-      const msg = error.response?.data?.detail || 'Registration failed';
+      const msg = error.message || 'Registration failed';
       showToast(msg, 'error');
       throw error;
     } finally {
@@ -109,10 +114,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('authToken');
-    showToast('Logged out successfully', 'info');
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      showToast('Logged out successfully', 'info');
+    } catch (error) {
+      console.error('Logout error', error);
+    }
   };
 
   const value = {

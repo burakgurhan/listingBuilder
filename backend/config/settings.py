@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     # API Keys
     OPENAI_API_KEY: str
     GROQ_API_KEY: str
+    SUPABASE_URL: str
+    SUPABASE_ANON_KEY: str
+    SUPABASE_JWT_SECRET: str
 
     # Database
     DATABASE_URL: str = "sqlite:///./listingBuilder.db"

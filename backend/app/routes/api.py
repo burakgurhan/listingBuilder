@@ -1,21 +1,21 @@
 from fastapi import APIRouter, HTTPException, Depends, status, Request
 from sqlalchemy.orm import Session
-from app.database import SessionLocal, init_db
-from app.database.models import User, GenerationHistory, Subscription, Plan
-from app.utils.helpers import (
+from ..database import SessionLocal, init_db
+from ..database.models import User, GenerationHistory, Subscription, Plan
+from ..utils.helpers import (
     validate_url, sanitize_url, verify_password, get_password_hash
 )
-from app.utils.jwt_utils import create_access_token
-from app.utils.email_utils import send_reset_email
-from app.models.auth import (
+from ..utils.jwt_utils import create_access_token
+from ..utils.email_utils import send_reset_email
+from ..models.auth import (
     LoginRequest, RegisterRequest, AuthResponse, ForgotPasswordRequest, UpdatePasswordRequest,
     ForgotPasswordResponse, ProfileUpdateRequest, ResetPasswordRequest
 )
-from app.models.product import GenerateTextRequest, GenerateTextResponse, HistoryItemResponse
+from ..models.product import GenerateTextRequest, GenerateTextResponse, HistoryItemResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi import BackgroundTasks
-from app.database.models import GenerationStatus
-from app.services.ai_service import process_listing_background
+from ..database.models import GenerationStatus
+from ..services.ai_service import process_listing_background
 from typing import List
 import sys
 import os
@@ -52,32 +52,30 @@ def create_user(db: Session, email: str, password: str):
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login")
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    from app.utils.jwt_utils import decode_access_token
+    from ..utils.jwt_utils import decode_access_token
     payload = decode_access_token(token)
-    if not payload or "sub" not in payload:
+    if not payload:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication credentials.")
-    user = get_user_by_email(db, payload["sub"])
+    
+    # Supabase JWT: 'sub' is the user UUID, 'email' is the email.
+    # Our DB currently links by email.
+    email = payload.get("email") or payload.get("sub")
+    if not email:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload.")
+        
+    user = get_user_by_email(db, email)
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found.")
+        # Lazy-create user if they exist in Supabase but not in our DB yet
+        user = create_user(db, email, "SUPABASE_MANAGED") # Password doesn't matter
     return user
 
-@router.post("/login", response_model=AuthResponse)
-def login(request: LoginRequest, db: Session = Depends(get_db)):
-    user = get_user_by_email(db, request.email)
-    if not user or not verify_password(request.password, user.hashed_password):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials.")
-    token = create_access_token({"sub": user.email})
-    return AuthResponse(access_token=token, token_type="bearer")
+@router.post("/login")
+def login():
+    raise HTTPException(status_code=status.HTTP_410_GONE, detail="Login moved to Supabase Auth on the frontend.")
 
-@router.post("/register", response_model=AuthResponse)
-def register(request: RegisterRequest, db: Session = Depends(get_db)):
-    if request.password != request.confirmPassword:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Passwords do not match.")
-    if get_user_by_email(db, request.email):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered.")
-    user = create_user(db, request.email, request.password)
-    token = create_access_token({"sub": user.email})
-    return AuthResponse(access_token=token, token_type="bearer")
+@router.post("/register")
+def register():
+    raise HTTPException(status_code=status.HTTP_410_GONE, detail="Registration moved to Supabase Auth on the frontend.")
 
 @router.post("/forgot-password", response_model=ForgotPasswordResponse)
 def forgot_password(

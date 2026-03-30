@@ -1,13 +1,16 @@
 import sys
 import os
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from app.routes import api
-from app.database import init_db
-from config.settings import Settings
 
 # Add the project root directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from .routes import api
+from .database import init_db
+from config.settings import Settings
+
+
 
 def create_app() -> FastAPI:
     app = FastAPI(
@@ -28,6 +31,10 @@ def create_app() -> FastAPI:
         allow_origins=[
             "http://localhost:3000",
             "http://localhost:5173",
+            "http://localhost:5174",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:5173",
+            "http://127.0.0.1:5174",
             settings.FRONTEND_URL
         ],
         allow_credentials=True,

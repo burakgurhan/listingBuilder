@@ -7,8 +7,8 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 
 def _get_secret() -> str:
-    # BUG-5 FIX: read secret from settings/environment instead of hardcoding
-    return get_settings().JWT_SECRET_KEY
+    # SUPABASE_JWT_SECRET is used to verify tokens from Supabase Auth
+    return get_settings().SUPABASE_JWT_SECRET
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
